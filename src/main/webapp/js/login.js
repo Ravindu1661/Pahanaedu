@@ -523,33 +523,30 @@ async function handleLogin(event) {
         
         console.log('Login response status:', response.status);
         
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+        // Always try to parse JSON response, even for error status codes
+        let result;
+        try {
+            result = await response.json();
+            console.log('Login result:', result);
+        } catch (jsonError) {
+            console.error('Failed to parse JSON response:', jsonError);
+            throw new Error(`Server communication error! Status: ${response.status}`);
         }
-        
-        const result = await response.json();
-        console.log('Login result:', result);
         
         if (result.success) {
             // Success - redirect based on role
             const userRole = result.role || 'CUSTOMER';
             const redirectUrl = result.redirectUrl || 'index2.jsp';
             
-            let successMessage = 'Login successful! Redirecting';
-            if (userRole === 'CASHIER') {
-                successMessage += ' to cashier dashboard...';
-            } else {
-                successMessage += ' to dashboard...';
-            }
-            
-            showMessage(successMessage, 'success');
+            showMessage(result.message || 'Login successful! Redirecting...', 'success');
             
             setTimeout(() => {
                 window.location.href = redirectUrl;
             }, 2000);
         } else {
-            // Show error message
-            showMessage(result.message || 'Login failed. Please check your credentials.', 'error');
+            // Show error message - this will handle inactive account messages properly
+            const errorMessage = result.message || 'Login failed. Please check your credentials.';
+            showMessage(errorMessage, 'error');
         }
         
     } catch (error) {
@@ -628,17 +625,20 @@ async function handleSignup(event) {
         
         console.log('Signup response status:', response.status);
         
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+        // Always try to parse JSON response
+        let result;
+        try {
+            result = await response.json();
+            console.log('Signup result:', result);
+        } catch (jsonError) {
+            console.error('Failed to parse JSON response:', jsonError);
+            throw new Error(`Server communication error! Status: ${response.status}`);
         }
-        
-        const result = await response.json();
-        console.log('Signup result:', result);
         
         if (result.success) {
             // Success - redirect to customer dashboard
             const redirectUrl = result.redirectUrl || 'index2.jsp';
-            showMessage('Account created successfully! Redirecting...', 'success');
+            showMessage(result.message || 'Account created successfully! Redirecting...', 'success');
             
             setTimeout(() => {
                 window.location.href = redirectUrl;
@@ -700,22 +700,26 @@ function resetFormValidation() {
     });
 }
 
-// Message Display
+// Message Display - Enhanced to handle multiline messages
 function showMessage(message, type) {
     if (messageContainer) {
-        messageContainer.textContent = message;
+        // Handle multiline messages by converting \n to <br>
+        const formattedMessage = message.replace(/\n/g, '<br>');
+        messageContainer.innerHTML = formattedMessage;
         messageContainer.className = `message-container show ${type}`;
         
-        // Auto hide after 5 seconds
+        // Auto hide after longer time for longer messages
+        const hideDelay = message.length > 100 ? 10000 : 5000;
         setTimeout(() => {
             clearMessages();
-        }, 5000);
+        }, hideDelay);
     }
 }
 
 function clearMessages() {
     if (messageContainer) {
         messageContainer.classList.remove('show', 'success', 'error');
+        messageContainer.innerHTML = '';
     }
 }
 

@@ -180,11 +180,26 @@ public class LoginServlet extends HttpServlet {
                 return;
             }
             
-            // Check if user account is active
-            if (!user.isActive()) {
-                System.out.println("LoginServlet: User account is inactive: " + email);
-                sendErrorResponse(response, out, HttpServletResponse.SC_FORBIDDEN, 
-                    "Your account has been deactivated. Please contact administrator.");
+            // ENHANCED STATUS CHECK - This is the main update
+            if (!isUserAccountActive(user)) {
+                System.out.println("LoginServlet: User account is inactive - Email: " + email + ", Status: " + user.getStatus());
+                
+                // Send customized message based on role and status
+                String message;
+                
+                if ("CASHIER".equalsIgnoreCase(user.getRole())) {
+                    message = "🔒 Your Cashier Account is Deactivated!\n\n" +
+                             "Your account has been deactivated by system administrator. " +
+                             "Please contact the administrator to reactivate your account.\n\n" +
+                             "📞 Support: admin@pahanaedu.lk";
+                } else {
+                    message = "🔒 Your Customer Account is Deactivated!\n\n" +
+                             "Your account has been temporarily deactivated. " +
+                             "Please contact our support team to reactivate your account.\n\n" +
+                             "📞 Support: 0112345678 | admin@pahanaedu.lk";
+                }
+                
+                sendErrorResponse(response, out, HttpServletResponse.SC_FORBIDDEN, message);
                 return;
             }
             
@@ -195,11 +210,19 @@ public class LoginServlet extends HttpServlet {
             String redirectUrl = determineRedirectUrl(user.getRole());
             
             System.out.println("LoginServlet: User login successful - Email: " + email + 
-                             ", Role: " + user.getRole() + ", Redirect: " + redirectUrl);
+                             ", Role: " + user.getRole() + ", Status: " + user.getStatus() + 
+                             ", Redirect: " + redirectUrl);
             
-            // Send success response
-            sendSuccessResponse(response, out, "Login successful!", 
-                user.getRole(), redirectUrl);
+            // Send success response with role-based message
+            String successMessage;
+            
+            if ("CASHIER".equalsIgnoreCase(user.getRole())) {
+                successMessage = "Cashier login successful! Redirecting to dashboard...";
+            } else {
+                successMessage = "Login successful! Redirecting to dashboard...";
+            }
+            
+            sendSuccessResponse(response, out, successMessage, user.getRole(), redirectUrl);
                 
         } catch (Exception e) {
             System.err.println("LoginServlet: Error during user authentication - " + e.getMessage());
@@ -207,6 +230,31 @@ public class LoginServlet extends HttpServlet {
             sendErrorResponse(response, out, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
                 "Authentication error. Please try again later.");
         }
+    }
+    
+    /**
+     * Enhanced method to check if user account is active
+     * Checks both the status field and user active state
+     */
+    private boolean isUserAccountActive(User user) {
+        if (user == null) {
+            return false;
+        }
+        
+        // Check database status field (primary check)
+        String status = user.getStatus();
+        if (status == null || !"active".equalsIgnoreCase(status.trim())) {
+            System.out.println("LoginServlet: User account inactive - Status: " + status);
+            return false;
+        }
+        
+        // Check user's isActive method (secondary check for backward compatibility)
+        if (!user.isActive()) {
+            System.out.println("LoginServlet: User account inactive - isActive() returned false");
+            return false;
+        }
+        
+        return true;
     }
     
     private String determineRedirectUrl(String role) {
@@ -282,6 +330,9 @@ public class LoginServlet extends HttpServlet {
         }
     }
     
+    /**
+     * Simple success response method - English only
+     */
     private void sendSuccessResponse(HttpServletResponse response, PrintWriter out, 
                                    String message, String role, String redirectUrl) {
         response.setStatus(HttpServletResponse.SC_OK);
@@ -299,6 +350,9 @@ public class LoginServlet extends HttpServlet {
         System.out.println("LoginServlet: Success response sent - " + jsonResponse);
     }
     
+    /**
+     * Simple error response method - English only
+     */
     private void sendErrorResponse(HttpServletResponse response, PrintWriter out, 
                                  int statusCode, String message) {
         response.setStatus(statusCode);
@@ -372,7 +426,8 @@ public class LoginServlet extends HttpServlet {
                 session.invalidate();
             }
             
-            sendSuccessResponse(response, out, "Logged out successfully!", "", "login.jsp");
+            sendSuccessResponse(response, out, 
+                "Logged out successfully!", "", "login.jsp");
             
         } catch (Exception e) {
             System.err.println("LoginServlet: Error during logout - " + e.getMessage());
