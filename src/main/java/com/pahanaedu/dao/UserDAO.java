@@ -238,7 +238,7 @@ public class UserDAO {
         return user;
     }
     
-    // ========== EXISTING METHODS ==========
+    // ========== LOGIN & VALIDATION METHODS ==========
     
     /**
      * Validate user login credentials with hashed password and role
@@ -369,9 +369,10 @@ public class UserDAO {
     }
     
     /**
-     * Get user by role
+     * Check if user has specific role
+     * @param email User email
      * @param role User role
-     * @return List of users with specified role
+     * @return true if user has specified role, false otherwise
      */
     public boolean isUserRole(String email, String role) {
         String query = "SELECT COUNT(*) FROM users WHERE email = ? AND role = ?";
@@ -393,6 +394,45 @@ public class UserDAO {
         
         return false;
     }
+    
+    // ========== PASSWORD RESET METHODS ==========
+    
+    /**
+     * Update user password (for password reset functionality)
+     * @param email User's email address
+     * @param newPassword New password (will be hashed)
+     * @return true if password updated successfully, false otherwise
+     */
+    public boolean updatePassword(String email, String newPassword) {
+        String query = "UPDATE users SET password = ?, updated_at = CURRENT_TIMESTAMP WHERE email = ?";
+        
+        try (Connection connection = DatabaseConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+            
+            // Hash the new password using existing method
+            String hashedPassword = hashPassword(newPassword);
+            
+            statement.setString(1, hashedPassword);
+            statement.setString(2, email.toLowerCase().trim());
+            
+            int rowsAffected = statement.executeUpdate();
+            
+            if (rowsAffected > 0) {
+                System.out.println("UserDAO: Password updated successfully for - " + email);
+                return true;
+            } else {
+                System.out.println("UserDAO: No user found to update password - " + email);
+                return false;
+            }
+            
+        } catch (SQLException e) {
+            System.err.println("UserDAO: Error updating password - " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+    
+    // ========== PASSWORD HASHING METHODS ==========
     
     /**
      * Hash password using BCrypt

@@ -92,6 +92,15 @@
                     </div>
                 </c:if>
 
+                <!-- Password Reset Success Message -->
+                <c:if test="${not empty sessionScope.loginSuccessMessage}">
+                    <div class="server-success-message">
+                        <i class="fas fa-check-circle"></i>
+                        ${sessionScope.loginSuccessMessage}
+                    </div>
+                    <c:remove var="loginSuccessMessage" scope="session" />
+                </c:if>
+
                 <!-- Login Form -->
                 <div class="form-section" id="loginForm">
                     <div class="form-header">
@@ -128,7 +137,7 @@
                                 <span class="checkmark"></span>
                                 Remember me
                             </label>
-                            <a href="#" class="forgot-password">Forgot Password?</a>
+                            <a href="forgot-password.jsp" class="forgot-password">Forgot Password?</a>
                         </div>
 
                         <button type="submit" class="submit-btn">
