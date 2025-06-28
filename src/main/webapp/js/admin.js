@@ -72,6 +72,7 @@ function loadAllData() {
 
 function updateAllDisplays() {
     updateStats();
+    updateInventoryStats(); // Add this line
     updateCategoryChart();
     
     // Update displays if we're on the respective pages
@@ -124,7 +125,6 @@ function navigateToPage(page) {
     currentPage = page;
     console.log(`📍 Successfully navigated to: ${page}`);
 }
-
 function loadPageData(page) {
     console.log(`📊 Loading data for page: ${page}`);
     
@@ -146,6 +146,7 @@ function loadPageData(page) {
         case 'inventory':
             if (data.books.length > 0) {
                 displayBooks();
+                updateInventoryStatsFromBooks(data.books); // Add this line
             } else {
                 loadBooks();
             }
@@ -158,10 +159,10 @@ function loadPageData(page) {
             break;
         case 'dashboard':
             updateStats();
+            updateInventoryStats(); // Add this line
             break;
     }
 }
-
 // ==============================================================================
 // BACKEND API CALLS
 // ==============================================================================
@@ -194,54 +195,120 @@ function makeApiCall(url, options = {}) {
         throw error;
     });
 }
-
 function loadStats() {
     console.log('📊 Loading stats...');
     
-    return makeApiCall('admin?action=getStats')
-        .then(response => {
-            console.log('📊 Stats response:', response);
-            
-            // Handle different response formats
-            if (response.totalCustomers !== undefined) {
-                data.stats = {
-                    totalCustomers: response.totalCustomers || 0,
-                    totalCashiers: response.totalCashiers || 0,
-                    totalUsers: response.totalUsers || 0,
-                    totalBooks: response.totalBooks || 0,
-                    totalRevenue: 125000,
-                    totalOrders: 48
-                };
-            } else if (response.success && response.data) {
-                data.stats = {
-                    totalCustomers: response.data.totalCustomers || 0,
-                    totalCashiers: response.data.totalCashiers || 0,
-                    totalUsers: response.data.totalUsers || 0,
-                    totalBooks: response.data.totalBooks || 0,
-                    totalRevenue: 125000,
-                    totalOrders: 48
-                };
-            }
-            
-            console.log('✅ Stats loaded:', data.stats);
-            updateStats();
-            return data.stats;
-        })
-        .catch(error => {
-            console.error('❌ Failed to load stats:', error);
+    return Promise.all([
+        makeApiCall('admin?action=getStats'),
+        makeApiCall('admin?action=getOutOfStockBooks'),
+        makeApiCall('admin?action=getLowStockBooks')
+    ])
+    .then(([statsResponse, outOfStockResponse, lowStockResponse]) => {
+        console.log('📊 Stats response:', statsResponse);
+        console.log('📊 Out of stock response:', outOfStockResponse);
+        console.log('📊 Low stock response:', lowStockResponse);
+        
+        // Handle stats response
+        if (statsResponse.totalCustomers !== undefined) {
             data.stats = {
-                totalCustomers: 0,
-                totalCashiers: 0,
-                totalUsers: 0,
-                totalBooks: 0,
-                totalRevenue: 0,
-                totalOrders: 0
+                totalCustomers: statsResponse.totalCustomers || 0,
+                totalCashiers: statsResponse.totalCashiers || 0,
+                totalUsers: statsResponse.totalUsers || 0,
+                totalBooks: statsResponse.totalBooks || 0,
+                totalRevenue: 125000,
+                totalOrders: 48
             };
-            updateStats();
-            return data.stats;
-        });
+        } else if (statsResponse.success && statsResponse.data) {
+            data.stats = {
+                totalCustomers: statsResponse.data.totalCustomers || 0,
+                totalCashiers: statsResponse.data.totalCashiers || 0,
+                totalUsers: statsResponse.data.totalUsers || 0,
+                totalBooks: statsResponse.data.totalBooks || 0,
+                totalRevenue: 125000,
+                totalOrders: 48
+            };
+        }
+        
+        // Handle out of stock books
+        let outOfStockBooks = [];
+        if (Array.isArray(outOfStockResponse)) {
+            outOfStockBooks = outOfStockResponse;
+        } else if (outOfStockResponse.success && Array.isArray(outOfStockResponse.data)) {
+            outOfStockBooks = outOfStockResponse.data;
+        }
+        
+        // Handle low stock books
+        let lowStockBooks = [];
+        if (Array.isArray(lowStockResponse)) {
+            lowStockBooks = lowStockResponse;
+        } else if (lowStockResponse.success && Array.isArray(lowStockResponse.data)) {
+            lowStockBooks = lowStockResponse.data;
+        }
+        
+        // Update inventory stats
+        data.stats.outOfStockBooks = outOfStockBooks.length;
+        data.stats.lowStockBooks = lowStockBooks.length;
+        
+        console.log('✅ All stats loaded:', data.stats);
+        updateStats();
+        updateInventoryStats();
+        
+        return data.stats;
+    })
+    .catch(error => {
+        console.error('❌ Failed to load stats:', error);
+        data.stats = {
+            totalCustomers: 0,
+            totalCashiers: 0,
+            totalUsers: 0,
+            totalBooks: 0,
+            totalRevenue: 0,
+            totalOrders: 0,
+            outOfStockBooks: 0,
+            lowStockBooks: 0
+        };
+        updateStats();
+        updateInventoryStats();
+        return data.stats;
+    });
 }
 
+function updateInventoryStats() {
+    console.log('📊 Updating inventory stats display...');
+    
+    const inventoryTotalBooks = document.getElementById('inventoryTotalBooks');
+    const inventoryOutOfStock = document.getElementById('inventoryOutOfStock');
+    const inventoryLowStock = document.getElementById('inventoryLowStock');
+    
+    if (inventoryTotalBooks) {
+        inventoryTotalBooks.textContent = data.stats.totalBooks || 0;
+    }
+    
+    if (inventoryOutOfStock) {
+        inventoryOutOfStock.textContent = data.stats.outOfStockBooks || 0;
+    }
+    
+    if (inventoryLowStock) {
+        inventoryLowStock.textContent = data.stats.lowStockBooks || 0;
+    }
+    
+    console.log('✅ Inventory stats updated');
+}
+function updateInventoryStatsFromBooks(books) {
+    if (!books || books.length === 0) return;
+    
+    const totalBooks = books.length;
+    const outOfStockBooks = books.filter(book => book.stock <= 0 || book.status === 'out_of_stock').length;
+    const lowStockBooks = books.filter(book => book.stock > 0 && book.stock <= 5 && book.status === 'active').length;
+    
+    // Update data.stats
+    data.stats.totalBooks = totalBooks;
+    data.stats.outOfStockBooks = outOfStockBooks;
+    data.stats.lowStockBooks = lowStockBooks;
+    
+    // Update the display
+    updateInventoryStats();
+}
 // ==============================================================================
 // CUSTOMER MANAGEMENT
 // ==============================================================================
@@ -423,7 +490,6 @@ function displayCashiers() {
 // ==============================================================================
 // BOOK MANAGEMENT - ENHANCED WITH IMAGES AND OFFERS
 // ==============================================================================
-
 function loadBooks() {
     console.log('📚 Loading books...');
     
@@ -444,6 +510,9 @@ function loadBooks() {
             data.books = books;
             console.log(`✅ Loaded ${books.length} books`);
             
+            // Update inventory stats from loaded books data
+            updateInventoryStatsFromBooks(books);
+            
             if (currentPage === 'inventory') {
                 displayBooks();
             }
@@ -459,7 +528,6 @@ function loadBooks() {
             return [];
         });
 }
-
 function displayBooks() {
     console.log('🎨 Displaying books...');
     
@@ -556,6 +624,7 @@ function getBookStatusText(status, stock) {
 }
 
 // View Book Details Modal
+// Updated viewBookDetails function - Replace your existing one
 function viewBookDetails(id) {
     const book = data.books.find(b => b.id === id);
     if (!book) {
@@ -572,9 +641,9 @@ function viewBookDetails(id) {
     modalTitle.textContent = 'Book Details';
     modalBody.innerHTML = `
         <div class="book-details-view">
-            ${book.images && book.images.length > 0 ? 
-                `<div class="book-images-gallery">
-                    <div class="main-image">
+            <div class="book-images-gallery">
+                ${book.images && book.images.length > 0 ? 
+                    `<div class="main-image">
                         <img src="${book.images[0]}" alt="${book.title}" id="mainBookImage">
                     </div>
                     ${book.images.length > 1 ? 
@@ -585,13 +654,13 @@ function viewBookDetails(id) {
                                      class="thumbnail ${index === 0 ? 'active' : ''}">`
                             ).join('')}
                         </div>` : ''
-                    }
-                </div>` : 
-                `<div class="no-image-placeholder">
-                    <i class="fas fa-book fa-3x"></i>
-                    <p>No images available</p>
-                </div>`
-            }
+                    }` : 
+                    `<div class="no-image-placeholder">
+                        <i class="fas fa-book"></i>
+                        <p>No images available</p>
+                    </div>`
+                }
+            </div>
             
             <div class="book-info">
                 <h3>${book.title}</h3>
@@ -607,10 +676,10 @@ function viewBookDetails(id) {
                         <label>Price:</label>
                         <div class="price-display">
                             ${hasOffer ? 
-                                `<span class="original-price">₨ ${parseFloat(book.price).toLocaleString()}</span>
-                                 <span class="offer-price">₨ ${parseFloat(book.offerPrice).toLocaleString()}</span>
+                                `<span class="original-price">Rs ${parseFloat(book.price).toLocaleString()}</span>
+                                 <span class="offer-price">Rs ${parseFloat(book.offerPrice).toLocaleString()}</span>
                                  <span class="discount-badge">${discountPercent}% OFF</span>` 
-                                : `<span class="current-price">₨ ${parseFloat(book.price).toLocaleString()}</span>`
+                                : `<span class="current-price">Rs ${parseFloat(book.price).toLocaleString()}</span>`
                             }
                         </div>
                     </div>
@@ -643,13 +712,13 @@ function viewBookDetails(id) {
                         <p>${book.details}</p>
                     </div>` : ''
                 }
-            </div>
-            
-            <div class="modal-actions">
-                <button class="btn-primary" onclick="closeModal(); editBook(${book.id})">
-                    <i class="fas fa-edit"></i> Edit Book
-                </button>
-                <button class="btn-secondary" onclick="closeModal()">Close</button>
+                
+                <div class="modal-actions">
+                    <button class="btn-primary" onclick="closeModal(); editBook(${book.id})">
+                        <i class="fas fa-edit"></i> Edit Book
+                    </button>
+                    <button class="btn-secondary" onclick="closeModal()">Close</button>
+                </div>
             </div>
         </div>
     `;
@@ -2248,5 +2317,8 @@ window.adminDashboard = {
     refreshAllData,
     viewBookDetails,
     editBook,
-    deleteBook
+    deleteBook,
+	updateInventoryStats,
+	updateInventoryStatsFromBooks
 };
+
