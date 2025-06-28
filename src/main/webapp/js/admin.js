@@ -1,6 +1,6 @@
 // ==============================================================================
-// PAHANA EDU - ADMIN DASHBOARD JAVASCRIPT (WITH INVENTORY MANAGEMENT)
-// Complete implementation with Books and Categories management
+// PAHANA EDU - ADMIN DASHBOARD JAVASCRIPT (WITH ENHANCED INVENTORY MANAGEMENT)
+// Complete implementation with Books and Categories management including images and offers
 // ==============================================================================
 
 // Global Variables
@@ -421,7 +421,7 @@ function displayCashiers() {
 }
 
 // ==============================================================================
-// BOOK MANAGEMENT
+// BOOK MANAGEMENT - ENHANCED WITH IMAGES AND OFFERS
 // ==============================================================================
 
 function loadBooks() {
@@ -459,7 +459,7 @@ function loadBooks() {
             return [];
         });
 }
-// Replace your existing displayBooks() function with this updated version
+
 function displayBooks() {
     console.log('🎨 Displaying books...');
     
@@ -483,23 +483,46 @@ function displayBooks() {
     } else {
         data.books.forEach((book, index) => {
             const row = document.createElement('tr');
+            const hasOffer = book.offerPrice && book.offerPrice > 0 && book.offerPrice < book.price;
+            const discountPercent = hasOffer ? Math.round(((book.price - book.offerPrice) / book.price) * 100) : 0;
+            
             row.innerHTML = `
                 <td>${book.id}</td>
-                <td>${book.title}</td>
+                <td>
+                    <div class="book-title-cell">
+                        ${book.images && book.images.length > 0 ? 
+                            `<img src="${book.images[0]}" alt="${book.title}" class="book-thumbnail" onerror="this.style.display='none'">` 
+                            : '<div class="book-no-image"><i class="fas fa-book"></i></div>'
+                        }
+                        <span>${book.title}</span>
+                    </div>
+                </td>
                 <td>${book.author}</td>
                 <td>${book.categoryName || 'No Category'}</td>
-                <td>₨ ${parseFloat(book.price).toLocaleString()}</td>
                 <td>
-                    <span class="stock-badge ${book.stock <= 5 ? 'low-stock' : 'normal-stock'}">
+                    <div class="price-cell">
+                        ${hasOffer ? 
+                            `<span class="original-price">₨ ${parseFloat(book.price).toLocaleString()}</span>
+                             <span class="offer-price">₨ ${parseFloat(book.offerPrice).toLocaleString()}</span>
+                             <span class="discount-badge">${discountPercent}% OFF</span>` 
+                            : `<span class="current-price">₨ ${parseFloat(book.price).toLocaleString()}</span>`
+                        }
+                    </div>
+                </td>
+                <td>
+                    <span class="stock-badge ${getStockStatus(book.stock)}">
                         ${book.stock}
                     </span>
                 </td>
                 <td class="status-cell">
-                    <span class="book-status-badge ${book.status === 'active' ? 'active' : 'inactive'}">
-                        ${book.status || 'active'}
+                    <span class="book-status-badge ${getBookStatusClass(book.status, book.stock)}">
+                        ${getBookStatusText(book.status, book.stock)}
                     </span>
                 </td>
                 <td>
+                    <button class="btn-sm btn-info" onclick="viewBookDetails(${book.id})" title="View Details">
+                        <i class="fas fa-eye"></i>
+                    </button>
                     <button class="btn-sm btn-info" onclick="editBook(${book.id})" title="Edit Book">
                         <i class="fas fa-edit"></i>
                     </button>
@@ -514,6 +537,492 @@ function displayBooks() {
     
     console.log(`✅ Displayed ${data.books.length} books`);
 }
+
+// Helper functions for stock and status
+function getStockStatus(stock) {
+    if (stock <= 0) return 'out-of-stock';
+    if (stock <= 5) return 'low-stock';
+    return 'normal-stock';
+}
+
+function getBookStatusClass(status, stock) {
+    if (stock <= 0) return 'out-of-stock';
+    return status === 'active' ? 'active' : 'inactive';
+}
+
+function getBookStatusText(status, stock) {
+    if (stock <= 0) return 'Out of Stock';
+    return status === 'active' ? 'Active' : 'Inactive';
+}
+
+// View Book Details Modal
+function viewBookDetails(id) {
+    const book = data.books.find(b => b.id === id);
+    if (!book) {
+        showNotification('Book not found', 'error');
+        return;
+    }
+    
+    const modalTitle = document.getElementById('modalTitle');
+    const modalBody = document.getElementById('modalBody');
+    
+    const hasOffer = book.offerPrice && book.offerPrice > 0 && book.offerPrice < book.price;
+    const discountPercent = hasOffer ? Math.round(((book.price - book.offerPrice) / book.price) * 100) : 0;
+    
+    modalTitle.textContent = 'Book Details';
+    modalBody.innerHTML = `
+        <div class="book-details-view">
+            ${book.images && book.images.length > 0 ? 
+                `<div class="book-images-gallery">
+                    <div class="main-image">
+                        <img src="${book.images[0]}" alt="${book.title}" id="mainBookImage">
+                    </div>
+                    ${book.images.length > 1 ? 
+                        `<div class="thumbnail-images">
+                            ${book.images.map((img, index) => 
+                                `<img src="${img}" alt="Image ${index + 1}" 
+                                     onclick="changeMainImage('${img}')" 
+                                     class="thumbnail ${index === 0 ? 'active' : ''}">`
+                            ).join('')}
+                        </div>` : ''
+                    }
+                </div>` : 
+                `<div class="no-image-placeholder">
+                    <i class="fas fa-book fa-3x"></i>
+                    <p>No images available</p>
+                </div>`
+            }
+            
+            <div class="book-info">
+                <h3>${book.title}</h3>
+                <p class="book-author">by ${book.author}</p>
+                
+                <div class="book-meta">
+                    <div class="meta-item">
+                        <label>Category:</label>
+                        <span>${book.categoryName || 'No Category'}</span>
+                    </div>
+                    
+                    <div class="meta-item">
+                        <label>Price:</label>
+                        <div class="price-display">
+                            ${hasOffer ? 
+                                `<span class="original-price">₨ ${parseFloat(book.price).toLocaleString()}</span>
+                                 <span class="offer-price">₨ ${parseFloat(book.offerPrice).toLocaleString()}</span>
+                                 <span class="discount-badge">${discountPercent}% OFF</span>` 
+                                : `<span class="current-price">₨ ${parseFloat(book.price).toLocaleString()}</span>`
+                            }
+                        </div>
+                    </div>
+                    
+                    <div class="meta-item">
+                        <label>Stock:</label>
+                        <span class="stock-badge ${getStockStatus(book.stock)}">
+                            ${book.stock} ${book.stock === 1 ? 'copy' : 'copies'}
+                        </span>
+                    </div>
+                    
+                    <div class="meta-item">
+                        <label>Status:</label>
+                        <span class="book-status-badge ${getBookStatusClass(book.status, book.stock)}">
+                            ${getBookStatusText(book.status, book.stock)}
+                        </span>
+                    </div>
+                </div>
+                
+                ${book.description ? 
+                    `<div class="book-description">
+                        <label>Description:</label>
+                        <p>${book.description}</p>
+                    </div>` : ''
+                }
+                
+                ${book.details ? 
+                    `<div class="book-details">
+                        <label>Additional Details:</label>
+                        <p>${book.details}</p>
+                    </div>` : ''
+                }
+            </div>
+            
+            <div class="modal-actions">
+                <button class="btn-primary" onclick="closeModal(); editBook(${book.id})">
+                    <i class="fas fa-edit"></i> Edit Book
+                </button>
+                <button class="btn-secondary" onclick="closeModal()">Close</button>
+            </div>
+        </div>
+    `;
+    
+    showModal();
+}
+
+// Change main image in gallery
+function changeMainImage(imageSrc) {
+    const mainImage = document.getElementById('mainBookImage');
+    const thumbnails = document.querySelectorAll('.thumbnail');
+    
+    if (mainImage) {
+        mainImage.src = imageSrc;
+    }
+    
+    thumbnails.forEach(thumb => {
+        thumb.classList.remove('active');
+        if (thumb.src === imageSrc) {
+            thumb.classList.add('active');
+        }
+    });
+}
+
+// Enhanced Add Book Modal
+function showAddBookModal() {
+    const modalTitle = document.getElementById('modalTitle');
+    const modalBody = document.getElementById('modalBody');
+    
+    modalTitle.textContent = 'Add New Book';
+    modalBody.innerHTML = `
+        <form id="bookForm">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Title *</label>
+                    <input type="text" id="bookTitle" required>
+                </div>
+                <div class="form-group">
+                    <label>Author *</label>
+                    <input type="text" id="bookAuthor" required>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>Category</label>
+                <select id="bookCategory">
+                    <option value="">Select Category</option>
+                    ${data.categories.map(cat => `<option value="${cat.id}">${cat.name}</option>`).join('')}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Or Add New Category</label>
+                <input type="text" id="newCategoryName" placeholder="Enter new category name">
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Regular Price (₨) *</label>
+                    <input type="number" id="bookPrice" step="0.01" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label>Offer Price (₨)</label>
+                    <input type="number" id="bookOfferPrice" step="0.01" min="0" placeholder="Optional">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>Stock Quantity *</label>
+                <input type="number" id="bookStock" min="0" required>
+            </div>
+            
+            <div class="form-group">
+                <label>Description</label>
+                <textarea id="bookDescription" rows="2" placeholder="Brief description"></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label>Additional Details</label>
+                <textarea id="bookDetails" rows="3" placeholder="Detailed information about the book"></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label>Book Images</label>
+                <input type="file" id="bookImages" multiple accept="image/*" class="file-input">
+                <div class="file-input-help">Select up to 5 images (JPG, PNG)</div>
+                <div id="imagePreview" class="image-preview"></div>
+            </div>
+            
+            <div class="form-group">
+                <label>Status</label>
+                <select id="bookStatus">
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                </select>
+            </div>
+            
+            <div class="form-actions">
+                <button type="button" class="btn-secondary" onclick="closeModal()">Cancel</button>
+                <button type="submit" class="btn-primary">Add Book</button>
+            </div>
+        </form>
+    `;
+    
+    showModal();
+    initializeBookForm();
+}
+
+// Enhanced Edit Book Modal
+function editBook(id) {
+    const book = data.books.find(b => b.id === id);
+    if (!book) {
+        showNotification('Book not found', 'error');
+        return;
+    }
+    
+    const modalTitle = document.getElementById('modalTitle');
+    const modalBody = document.getElementById('modalBody');
+    
+    modalTitle.textContent = 'Edit Book';
+    modalBody.innerHTML = `
+        <form id="bookForm">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Title *</label>
+                    <input type="text" id="bookTitle" value="${book.title}" required>
+                </div>
+                <div class="form-group">
+                    <label>Author *</label>
+                    <input type="text" id="bookAuthor" value="${book.author}" required>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>Category</label>
+                <select id="bookCategory">
+                    <option value="">Select Category</option>
+                    ${data.categories.map(cat => 
+                        `<option value="${cat.id}" ${cat.id === book.categoryId ? 'selected' : ''}>${cat.name}</option>`
+                    ).join('')}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Or Add New Category</label>
+                <input type="text" id="newCategoryName" placeholder="Enter new category name" value="${book.categoryId ? '' : book.categoryName || ''}">
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Regular Price (₨) *</label>
+                    <input type="number" id="bookPrice" step="0.01" min="0" value="${book.price}" required>
+                </div>
+                <div class="form-group">
+                    <label>Offer Price (₨)</label>
+                    <input type="number" id="bookOfferPrice" step="0.01" min="0" value="${book.offerPrice || ''}" placeholder="Optional">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>Stock Quantity *</label>
+                <input type="number" id="bookStock" min="0" value="${book.stock}" required>
+            </div>
+            
+            <div class="form-group">
+                <label>Description</label>
+                <textarea id="bookDescription" rows="2" placeholder="Brief description">${book.description || ''}</textarea>
+            </div>
+            
+            <div class="form-group">
+                <label>Additional Details</label>
+                <textarea id="bookDetails" rows="3" placeholder="Detailed information">${book.details || ''}</textarea>
+            </div>
+            
+            <div class="form-group">
+                <label>Book Images</label>
+                <input type="file" id="bookImages" multiple accept="image/*" class="file-input">
+                <div class="file-input-help">Select up to 5 images (JPG, PNG)</div>
+                ${book.images && book.images.length > 0 ? 
+                    `<div class="current-images">
+                        <label>Current Images:</label>
+                        <div class="current-images-grid">
+                            ${book.images.map((img, index) => 
+                                `<div class="current-image-item">
+                                    <img src="${img}" alt="Book image ${index + 1}">
+                                    <span>Image ${index + 1}</span>
+                                </div>`
+                            ).join('')}
+                        </div>
+                    </div>` : ''
+                }
+                <div id="imagePreview" class="image-preview"></div>
+            </div>
+            
+            <div class="form-group">
+                <label>Status</label>
+                <select id="bookStatus">
+                    <option value="active" ${book.status === 'active' ? 'selected' : ''}>Active</option>
+                    <option value="inactive" ${book.status === 'inactive' ? 'selected' : ''}>Inactive</option>
+                </select>
+            </div>
+            
+            <div class="form-actions">
+                <button type="button" class="btn-secondary" onclick="closeModal()">Cancel</button>
+                <button type="submit" class="btn-primary">Update Book</button>
+            </div>
+        </form>
+    `;
+    
+    showModal();
+    initializeBookForm(book);
+}
+
+// Initialize book form
+function initializeBookForm(book = null) {
+    const categorySelect = document.getElementById('bookCategory');
+    const newCategoryInput = document.getElementById('newCategoryName');
+    const priceInput = document.getElementById('bookPrice');
+    const offerPriceInput = document.getElementById('bookOfferPrice');
+    const fileInput = document.getElementById('bookImages');
+    const imagePreview = document.getElementById('imagePreview');
+    
+    // Category selection logic
+    if (categorySelect) {
+        categorySelect.addEventListener('change', function() {
+            if (this.value) {
+                newCategoryInput.disabled = true;
+                newCategoryInput.value = '';
+            } else {
+                newCategoryInput.disabled = false;
+            }
+        });
+    }
+    
+    if (newCategoryInput) {
+        newCategoryInput.addEventListener('input', function() {
+            if (this.value.trim()) {
+                categorySelect.disabled = true;
+                categorySelect.value = '';
+            } else {
+                categorySelect.disabled = false;
+            }
+        });
+    }
+    
+    // Price validation
+    if (offerPriceInput) {
+        offerPriceInput.addEventListener('input', function() {
+            const regularPrice = parseFloat(priceInput.value) || 0;
+            const offerPrice = parseFloat(this.value) || 0;
+            
+            if (offerPrice > 0 && offerPrice >= regularPrice) {
+                this.setCustomValidity('Offer price must be less than regular price');
+            } else {
+                this.setCustomValidity('');
+            }
+        });
+    }
+    
+    // Image preview
+    if (fileInput) {
+        fileInput.addEventListener('change', function() {
+            handleImagePreview(this.files);
+        });
+    }
+    
+    // Form submission
+    document.getElementById('bookForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData();
+        formData.append('action', book ? 'updateBook' : 'addBook');
+        if (book) formData.append('id', book.id);
+        
+        formData.append('title', document.getElementById('bookTitle').value);
+        formData.append('author', document.getElementById('bookAuthor').value);
+        formData.append('categoryId', document.getElementById('bookCategory').value);
+        formData.append('newCategoryName', document.getElementById('newCategoryName').value);
+        formData.append('price', document.getElementById('bookPrice').value);
+        formData.append('offerPrice', document.getElementById('bookOfferPrice').value);
+        formData.append('stock', document.getElementById('bookStock').value);
+        formData.append('description', document.getElementById('bookDescription').value);
+        formData.append('details', document.getElementById('bookDetails').value);
+        formData.append('status', document.getElementById('bookStatus').value);
+        
+        // Add images
+        const files = document.getElementById('bookImages').files;
+        for (let i = 0; i < files.length && i < 5; i++) {
+            formData.append('bookImages', files[i]);
+        }
+        
+        submitBookForm(formData);
+    });
+}
+
+// Handle image preview
+function handleImagePreview(files) {
+    const imagePreview = document.getElementById('imagePreview');
+    if (!imagePreview) return;
+    
+    imagePreview.innerHTML = '';
+    
+    if (files.length > 5) {
+        showNotification('Maximum 5 images allowed', 'warning');
+        return;
+    }
+    
+    Array.from(files).forEach((file, index) => {
+        if (file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const imageItem = document.createElement('div');
+                imageItem.className = 'image-preview-item';
+                imageItem.innerHTML = `
+                    <img src="${e.target.result}" alt="Preview ${index + 1}">
+                    <span>Image ${index + 1}</span>
+                `;
+                imagePreview.appendChild(imageItem);
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+}
+
+// Submit book form
+function submitBookForm(formData) {
+    fetch('admin', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification(data.message, 'success');
+            closeModal();
+            loadBooks();
+            loadCategories();
+            loadStats();
+            loadCategoriesWithBookCount();
+        } else {
+            showNotification(data.message, 'error');
+        }
+    })
+    .catch(error => {
+        showNotification('Failed to save book', 'error');
+        console.error('Error:', error);
+    });
+}
+
+function deleteBook(id) {
+    if (confirm('Are you sure you want to delete this book?')) {
+        const formData = new URLSearchParams();
+        formData.append('action', 'deleteBook');
+        formData.append('id', id);
+        
+        makeApiCall('admin', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (response.success) {
+                showNotification(response.message, 'success');
+                loadBooks();
+                loadStats();
+                loadCategoriesWithBookCount();
+            } else {
+                showNotification(response.message, 'error');
+            }
+        })
+        .catch(error => {
+            showNotification('Failed to delete book', 'error');
+        });
+    }
+}
+
 // ==============================================================================
 // CATEGORY MANAGEMENT
 // ==============================================================================
@@ -573,280 +1082,6 @@ function loadCategoriesWithBookCount() {
             console.error('❌ Failed to load categories with book count:', error);
             return [];
         });
-}
-
-// ==============================================================================
-// BOOK MODAL FUNCTIONS
-// ==============================================================================
-
-function showAddBookModal() {
-    const modalTitle = document.getElementById('modalTitle');
-    const modalBody = document.getElementById('modalBody');
-    
-    modalTitle.textContent = 'Add New Book';
-    modalBody.innerHTML = `
-        <form id="bookForm">
-            <div class="form-group">
-                <label>Title *</label>
-                <input type="text" id="bookTitle" required>
-            </div>
-            <div class="form-group">
-                <label>Author *</label>
-                <input type="text" id="bookAuthor" required>
-            </div>
-            <div class="form-group">
-                <label>ISBN</label>
-                <input type="text" id="bookIsbn" placeholder="Optional">
-            </div>
-            <div class="form-group">
-                <label>Category</label>
-                <select id="bookCategory">
-                    <option value="">Select Category</option>
-                    ${data.categories.map(cat => `<option value="${cat.id}">${cat.name}</option>`).join('')}
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Or Add New Category</label>
-                <input type="text" id="newCategoryName" placeholder="Enter new category name">
-            </div>
-            <div class="form-group">
-                <label>Price (₨) *</label>
-                <input type="number" id="bookPrice" step="0.01" min="0" required>
-            </div>
-            <div class="form-group">
-                <label>Stock Quantity *</label>
-                <input type="number" id="bookStock" min="0" required>
-            </div>
-            <div class="form-group">
-                <label>Description</label>
-                <textarea id="bookDescription" rows="3" placeholder="Optional description"></textarea>
-            </div>
-            <div class="form-group">
-                <label>Status</label>
-                <select id="bookStatus">
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
-                </select>
-            </div>
-            <div class="form-actions">
-                <button type="button" class="btn-secondary" onclick="closeModal()">Cancel</button>
-                <button type="submit" class="btn-primary">Add Book</button>
-            </div>
-        </form>
-    `;
-    
-    showModal();
-    
-    // Handle category selection logic
-    const categorySelect = document.getElementById('bookCategory');
-    const newCategoryInput = document.getElementById('newCategoryName');
-    
-    categorySelect.addEventListener('change', function() {
-        if (this.value) {
-            newCategoryInput.disabled = true;
-            newCategoryInput.value = '';
-        } else {
-            newCategoryInput.disabled = false;
-        }
-    });
-    
-    newCategoryInput.addEventListener('input', function() {
-        if (this.value.trim()) {
-            categorySelect.disabled = true;
-            categorySelect.value = '';
-        } else {
-            categorySelect.disabled = false;
-        }
-    });
-    
-    // Handle form submission
-    document.getElementById('bookForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        const formData = new URLSearchParams();
-        formData.append('action', 'addBook');
-        formData.append('title', document.getElementById('bookTitle').value);
-        formData.append('author', document.getElementById('bookAuthor').value);
-        formData.append('isbn', document.getElementById('bookIsbn').value);
-        formData.append('categoryId', document.getElementById('bookCategory').value);
-        formData.append('newCategoryName', document.getElementById('newCategoryName').value);
-        formData.append('price', document.getElementById('bookPrice').value);
-        formData.append('stock', document.getElementById('bookStock').value);
-        formData.append('description', document.getElementById('bookDescription').value);
-        formData.append('status', document.getElementById('bookStatus').value);
-        
-        makeApiCall('admin', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => {
-            if (response.success) {
-                showNotification(response.message, 'success');
-                closeModal();
-                loadBooks();
-                loadCategories();
-                loadStats();
-                loadCategoriesWithBookCount();
-            } else {
-                showNotification(response.message, 'error');
-            }
-        })
-        .catch(error => {
-            showNotification('Failed to add book', 'error');
-        });
-    });
-}
-
-function editBook(id) {
-    const book = data.books.find(b => b.id === id);
-    if (!book) {
-        showNotification('Book not found', 'error');
-        return;
-    }
-    
-    const modalTitle = document.getElementById('modalTitle');
-    const modalBody = document.getElementById('modalBody');
-    
-    modalTitle.textContent = 'Edit Book';
-    modalBody.innerHTML = `
-        <form id="bookForm">
-            <div class="form-group">
-                <label>Title *</label>
-                <input type="text" id="bookTitle" value="${book.title}" required>
-            </div>
-            <div class="form-group">
-                <label>Author *</label>
-                <input type="text" id="bookAuthor" value="${book.author}" required>
-            </div>
-            <div class="form-group">
-                <label>ISBN</label>
-                <input type="text" id="bookIsbn" value="${book.isbn || ''}" placeholder="Optional">
-            </div>
-            <div class="form-group">
-                <label>Category</label>
-                <select id="bookCategory">
-                    <option value="">Select Category</option>
-                    ${data.categories.map(cat => 
-                        `<option value="${cat.id}" ${cat.id === book.categoryId ? 'selected' : ''}>${cat.name}</option>`
-                    ).join('')}
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Or Add New Category</label>
-                <input type="text" id="newCategoryName" placeholder="Enter new category name">
-            </div>
-            <div class="form-group">
-                <label>Price (₨) *</label>
-                <input type="number" id="bookPrice" step="0.01" min="0" value="${book.price}" required>
-            </div>
-            <div class="form-group">
-                <label>Stock Quantity *</label>
-                <input type="number" id="bookStock" min="0" value="${book.stock}" required>
-            </div>
-            <div class="form-group">
-                <label>Description</label>
-                <textarea id="bookDescription" rows="3" placeholder="Optional description">${book.description || ''}</textarea>
-            </div>
-            <div class="form-group">
-                <label>Status</label>
-                <select id="bookStatus">
-                    <option value="active" ${book.status === 'active' ? 'selected' : ''}>Active</option>
-                    <option value="inactive" ${book.status === 'inactive' ? 'selected' : ''}>Inactive</option>
-                </select>
-            </div>
-            <div class="form-actions">
-                <button type="button" class="btn-secondary" onclick="closeModal()">Cancel</button>
-                <button type="submit" class="btn-primary">Update Book</button>
-            </div>
-        </form>
-    `;
-    
-    showModal();
-    
-    // Handle category selection logic
-    const categorySelect = document.getElementById('bookCategory');
-    const newCategoryInput = document.getElementById('newCategoryName');
-    
-    categorySelect.addEventListener('change', function() {
-        if (this.value) {
-            newCategoryInput.disabled = true;
-            newCategoryInput.value = '';
-        } else {
-            newCategoryInput.disabled = false;
-        }
-    });
-    
-    newCategoryInput.addEventListener('input', function() {
-        if (this.value.trim()) {
-            categorySelect.disabled = true;
-            categorySelect.value = '';
-        } else {
-            categorySelect.disabled = false;
-        }
-    });
-    
-    // Handle form submission
-    document.getElementById('bookForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        const formData = new URLSearchParams();
-        formData.append('action', 'updateBook');
-        formData.append('id', id);
-        formData.append('title', document.getElementById('bookTitle').value);
-        formData.append('author', document.getElementById('bookAuthor').value);
-        formData.append('isbn', document.getElementById('bookIsbn').value);
-        formData.append('categoryId', document.getElementById('bookCategory').value);
-        formData.append('newCategoryName', document.getElementById('newCategoryName').value);
-        formData.append('price', document.getElementById('bookPrice').value);
-        formData.append('stock', document.getElementById('bookStock').value);
-        formData.append('description', document.getElementById('bookDescription').value);
-        formData.append('status', document.getElementById('bookStatus').value);
-        
-        makeApiCall('admin', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => {
-            if (response.success) {
-                showNotification(response.message, 'success');
-                closeModal();
-                loadBooks();
-                loadCategories();
-                loadCategoriesWithBookCount();
-            } else {
-                showNotification(response.message, 'error');
-            }
-        })
-        .catch(error => {
-            showNotification('Failed to update book', 'error');
-        });
-    });
-}
-
-function deleteBook(id) {
-    if (confirm('Are you sure you want to delete this book?')) {
-        const formData = new URLSearchParams();
-        formData.append('action', 'deleteBook');
-        formData.append('id', id);
-        
-        makeApiCall('admin', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => {
-            if (response.success) {
-                showNotification(response.message, 'success');
-                loadBooks();
-                loadStats();
-                loadCategoriesWithBookCount();
-            } else {
-                showNotification(response.message, 'error');
-            }
-        })
-        .catch(error => {
-            showNotification('Failed to delete book', 'error');
-        });
-    }
 }
 
 // ==============================================================================
@@ -1744,6 +1979,9 @@ style.textContent = `
         background: #ef4444;
         animation: pulse 2s infinite;
     }
+    .stock-badge.out-of-stock {
+        background: #64748b;
+    }
     @keyframes pulse {
         0%, 100% { opacity: 1; }
         50% { opacity: 0.7; }
@@ -1797,6 +2035,172 @@ style.textContent = `
         resize: vertical;
         font-family: inherit;
     }
+    .form-row {
+        display: flex;
+        gap: 15px;
+    }
+    .form-row .form-group {
+        flex: 1;
+    }
+    .book-thumbnail {
+        width: 40px;
+        height: 40px;
+        object-fit: cover;
+        border-radius: 4px;
+        margin-right: 10px;
+    }
+    .book-no-image {
+        width: 40px;
+        height: 40px;
+        background: #f1f5f9;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 10px;
+        color: #94a3b8;
+    }
+    .price-cell {
+        display: flex;
+        flex-direction: column;
+    }
+    .original-price {
+        text-decoration: line-through;
+        color: #94a3b8;
+        font-size: 0.9em;
+    }
+    .offer-price {
+        color: #ef4444;
+        font-weight: bold;
+    }
+    .current-price {
+        font-weight: bold;
+    }
+    .discount-badge {
+        background: #fef2f2;
+        color: #ef4444;
+        padding: 2px 6px;
+        border-radius: 12px;
+        font-size: 0.8em;
+        margin-top: 3px;
+        align-self: flex-start;
+    }
+    .book-details-view {
+        display: flex;
+        gap: 20px;
+        max-height: 80vh;
+        overflow: auto;
+    }
+    .book-images-gallery {
+        flex: 1;
+        max-width: 50%;
+    }
+    .main-image img {
+        width: 100%;
+        max-height: 400px;
+        object-fit: contain;
+        border-radius: 8px;
+        background: #f8fafc;
+        padding: 20px;
+    }
+    .thumbnail-images {
+        display: flex;
+        gap: 10px;
+        margin-top: 10px;
+        overflow-x: auto;
+        padding: 5px;
+    }
+    .thumbnail {
+        width: 60px;
+        height: 60px;
+        object-fit: cover;
+        border-radius: 4px;
+        cursor: pointer;
+        opacity: 0.7;
+        border: 2px solid transparent;
+    }
+    .thumbnail.active {
+        opacity: 1;
+        border-color: #2563eb;
+    }
+    .book-info {
+        flex: 1;
+    }
+    .book-author {
+        color: #64748b;
+        margin-bottom: 15px;
+    }
+    .book-meta {
+        background: #f8fafc;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+    .meta-item {
+        display: flex;
+        margin-bottom: 10px;
+    }
+    .meta-item label {
+        width: 120px;
+        font-weight: 600;
+    }
+    .book-description, .book-details {
+        margin-bottom: 15px;
+    }
+    .book-description p, .book-details p {
+        margin-top: 5px;
+        line-height: 1.5;
+    }
+    .modal-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+        margin-top: 20px;
+    }
+    .image-preview {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 10px;
+    }
+    .image-preview-item {
+        position: relative;
+        width: 80px;
+    }
+    .image-preview-item img {
+        width: 100%;
+        height: 80px;
+        object-fit: cover;
+        border-radius: 4px;
+    }
+    .image-preview-item span {
+        display: block;
+        text-align: center;
+        font-size: 0.8em;
+        color: #64748b;
+    }
+    .current-images-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 10px;
+    }
+    .current-image-item {
+        position: relative;
+        width: 80px;
+    }
+    .current-image-item img {
+        width: 100%;
+        height: 80px;
+        object-fit: cover;
+        border-radius: 4px;
+    }
+    .current-image-item span {
+        display: block;
+        text-align: center;
+        font-size: 0.8em;
+        color: #64748b;
+    }
 `;
 document.head.appendChild(style);
 
@@ -1810,7 +2214,7 @@ console.log('├── Navigation: navigateToPage(page)');
 console.log('├── Data Loading: loadAllData(), loadCustomers(), loadCashiers(), loadBooks(), loadCategories()');
 console.log('├── Customers: showAddCustomerModal(), editCustomer(id), deleteCustomer(id)');
 console.log('├── Cashiers: showAddCashierModal(), editCashier(id), deleteCashier(id)');
-console.log('├── Books: showAddBookModal(), editBook(id), deleteBook(id)');
+console.log('├── Books: showAddBookModal(), editBook(id), deleteBook(id), viewBookDetails(id)');
 console.log('├── Billing: generateBill(), calculateBill(), printBill()');
 console.log('├── Debug: debugDataState(), refreshAllData()');
 console.log('└── Utilities: showNotification(message, type), showModal(), closeModal()');
@@ -1841,5 +2245,8 @@ window.adminDashboard = {
     showModal,
     closeModal,
     debugDataState,
-    refreshAllData
+    refreshAllData,
+    viewBookDetails,
+    editBook,
+    deleteBook
 };

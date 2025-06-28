@@ -383,15 +383,37 @@
                     </table>
                 </div>
             </div>
-            
-			<!-- Replace your existing inventory-content div with this updated version -->
+
+			<!-- Replace your inventory-content div in admin.jsp with this -->
 			<div class="page-content" id="inventory-content" style="display: none;">
 			    <div class="content-header">
 			        <h2>Inventory Management</h2>
-			        <button class="btn-primary" onclick="showAddBookModal()">
-			            <i class="fas fa-plus"></i> Add Book
-			        </button>
+			        <div class="header-actions">
+			            <button class="btn-secondary" onclick="viewOutOfStockBooks()" title="View Out of Stock Books">
+			                <i class="fas fa-exclamation-triangle"></i> Out of Stock
+			            </button>
+			            <button class="btn-primary" onclick="showAddBookModal()">
+			                <i class="fas fa-plus"></i> Add Book
+			            </button>
+			        </div>
 			    </div>
+			    
+			    <!-- Stats Summary -->
+			    <div class="inventory-stats">
+			        <div class="stat-item">
+			            <span class="stat-label">Total Books:</span>
+			            <span class="stat-value" id="inventoryTotalBooks">0</span>
+			        </div>
+			        <div class="stat-item">
+			            <span class="stat-label">Low Stock:</span>
+			            <span class="stat-value warning" id="inventoryLowStock">0</span>
+			        </div>
+			        <div class="stat-item">
+			            <span class="stat-label">Out of Stock:</span>
+			            <span class="stat-value danger" id="inventoryOutOfStock">0</span>
+			        </div>
+			    </div>
+			    
 			    <div class="table-container">
 			        <table class="data-table" id="booksTable">
 			            <thead>

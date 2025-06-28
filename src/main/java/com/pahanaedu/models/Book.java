@@ -3,22 +3,27 @@ package com.pahanaedu.models;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
+import java.util.List;
 
 public class Book {
     // Constants for status
     public static final String STATUS_ACTIVE = "active";
     public static final String STATUS_INACTIVE = "inactive";
+    public static final String STATUS_OUT_OF_STOCK = "out_of_stock";
     
     private int id;
     private String title;
     private String author;
-    private String isbn;
     private int categoryId;
     private String categoryName; // For joined queries
     private BigDecimal price;
+    private BigDecimal offerPrice; // New field for offer price
     private int stock;
     private String description;
+    private String details; // New field for additional details
+    private String imageUrls; // Comma-separated image URLs
     private String status;
+    private List<String> images; // For multiple images
     private Timestamp createdAt;
     private Timestamp updatedAt;
     
@@ -28,16 +33,42 @@ public class Book {
         this.stock = 0;
     }
     
-    public Book(String title, String author, String isbn, int categoryId, 
+    public Book(String title, String author, int categoryId, 
                 BigDecimal price, int stock, String description) {
         this();
         this.title = title;
         this.author = author;
-        this.isbn = isbn;
         this.categoryId = categoryId;
         this.price = price;
         this.stock = stock;
         this.description = description;
+    }
+    
+    // Auto-update status based on stock
+    public void updateStatusBasedOnStock() {
+        if (this.stock <= 0) {
+            this.status = STATUS_OUT_OF_STOCK;
+        } else if (STATUS_OUT_OF_STOCK.equals(this.status) && this.stock > 0) {
+            this.status = STATUS_ACTIVE;
+        }
+    }
+    
+    // Check if book has offer
+    public boolean hasOffer() {
+        return offerPrice != null && offerPrice.compareTo(BigDecimal.ZERO) > 0 
+               && offerPrice.compareTo(price) < 0;
+    }
+    
+    // Get discount percentage
+    public int getDiscountPercentage() {
+        if (!hasOffer()) return 0;
+        BigDecimal discount = price.subtract(offerPrice);
+        return discount.multiply(BigDecimal.valueOf(100)).divide(price, 0, BigDecimal.ROUND_HALF_UP).intValue();
+    }
+    
+    // Get effective price (offer price if available, otherwise regular price)
+    public BigDecimal getEffectivePrice() {
+        return hasOffer() ? offerPrice : price;
     }
     
     // Getters and Setters
@@ -65,14 +96,6 @@ public class Book {
         this.author = author;
     }
     
-    public String getIsbn() {
-        return isbn;
-    }
-    
-    public void setIsbn(String isbn) {
-        this.isbn = isbn;
-    }
-    
     public int getCategoryId() {
         return categoryId;
     }
@@ -97,12 +120,21 @@ public class Book {
         this.price = price;
     }
     
+    public BigDecimal getOfferPrice() {
+        return offerPrice;
+    }
+    
+    public void setOfferPrice(BigDecimal offerPrice) {
+        this.offerPrice = offerPrice;
+    }
+    
     public int getStock() {
         return stock;
     }
     
     public void setStock(int stock) {
         this.stock = stock;
+        updateStatusBasedOnStock(); // Auto-update status
     }
     
     public String getDescription() {
@@ -111,6 +143,30 @@ public class Book {
     
     public void setDescription(String description) {
         this.description = description;
+    }
+    
+    public String getDetails() {
+        return details;
+    }
+    
+    public void setDetails(String details) {
+        this.details = details;
+    }
+    
+    public String getImageUrls() {
+        return imageUrls;
+    }
+    
+    public void setImageUrls(String imageUrls) {
+        this.imageUrls = imageUrls;
+    }
+    
+    public List<String> getImages() {
+        return images;
+    }
+    
+    public void setImages(List<String> images) {
+        this.images = images;
     }
     
     public String getStatus() {
@@ -143,9 +199,9 @@ public class Book {
                 "id=" + id +
                 ", title='" + title + '\'' +
                 ", author='" + author + '\'' +
-                ", isbn='" + isbn + '\'' +
                 ", categoryId=" + categoryId +
                 ", price=" + price +
+                ", offerPrice=" + offerPrice +
                 ", stock=" + stock +
                 ", status='" + status + '\'' +
                 '}';
