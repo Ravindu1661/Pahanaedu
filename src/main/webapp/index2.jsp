@@ -22,8 +22,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- Custom CSS -->
-    <link href="css/style.css" rel="stylesheet">
-    <link href="css/dashboard.css" rel="stylesheet">
+    <link href="css/customerdashbord.css" rel="stylesheet">
 </head>
 <body>
     <!-- Header - Modified for Logged In User -->
@@ -334,8 +333,7 @@
     </footer>
 
     <!-- Custom JavaScript -->
-    <script src="js/script.js"></script>
-    <script src="js/dashboard.js"></script>
+    <script src="js/customer-script.js"></script>
 
 </body>
 </html>

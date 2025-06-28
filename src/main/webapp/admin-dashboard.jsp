@@ -384,32 +384,34 @@
                 </div>
             </div>
             
-            <div class="page-content" id="inventory-content" style="display: none;">
-                <div class="content-header">
-                    <h2>Inventory Management</h2>
-                    <button class="btn-primary" onclick="showAddBookModal()">
-                        <i class="fas fa-plus"></i> Add Book
-                    </button>
-                </div>
-                <div class="table-container">
-                    <table class="data-table" id="booksTable">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Title</th>
-                                <th>Author</th>
-                                <th>Category</th>
-                                <th>Price</th>
-                                <th>Stock</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <!-- Book data will be loaded here -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+			<!-- Replace your existing inventory-content div with this updated version -->
+			<div class="page-content" id="inventory-content" style="display: none;">
+			    <div class="content-header">
+			        <h2>Inventory Management</h2>
+			        <button class="btn-primary" onclick="showAddBookModal()">
+			            <i class="fas fa-plus"></i> Add Book
+			        </button>
+			    </div>
+			    <div class="table-container">
+			        <table class="data-table" id="booksTable">
+			            <thead>
+			                <tr>
+			                    <th>ID</th>
+			                    <th>Title</th>
+			                    <th>Author</th>
+			                    <th>Category</th>
+			                    <th>Price</th>
+			                    <th>Stock</th>
+			                    <th>Status</th>
+			                    <th>Actions</th>
+			                </tr>
+			            </thead>
+			            <tbody>
+			                <!-- Book data will be loaded here -->
+			            </tbody>
+			        </table>
+			    </div>
+			</div>
             
             <div class="page-content" id="billing-content" style="display: none;">
                 <div class="billing-container">

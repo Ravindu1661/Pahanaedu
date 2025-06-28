@@ -1,6 +1,6 @@
 // ==============================================================================
-// PAHANA EDU - ADMIN DASHBOARD JAVASCRIPT (FULLY UPDATED)
-// Added phone number and status fields for customers and cashiers
+// PAHANA EDU - ADMIN DASHBOARD JAVASCRIPT (WITH INVENTORY MANAGEMENT)
+// Complete implementation with Books and Categories management
 // ==============================================================================
 
 // Global Variables
@@ -11,6 +11,7 @@ let data = {
     customers: [],
     cashiers: [],
     books: [],
+    categories: [],
     bills: [],
     stats: {
         totalCustomers: 0,
@@ -54,7 +55,8 @@ function loadAllData() {
         loadStats(),
         loadCustomers(),
         loadCashiers(),
-        loadInitialData()
+        loadBooks(),
+        loadCategories()
     ]).then(() => {
         console.log('✅ All data loaded successfully');
         updateAllDisplays();
@@ -70,6 +72,7 @@ function loadAllData() {
 
 function updateAllDisplays() {
     updateStats();
+    updateCategoryChart();
     
     // Update displays if we're on the respective pages
     if (currentPage === 'customers') {
@@ -79,7 +82,7 @@ function updateAllDisplays() {
         displayCashiers();
     }
     if (currentPage === 'inventory') {
-        loadBooks();
+        displayBooks();
     }
 }
 
@@ -141,7 +144,11 @@ function loadPageData(page) {
             }
             break;
         case 'inventory':
-            loadBooks();
+            if (data.books.length > 0) {
+                displayBooks();
+            } else {
+                loadBooks();
+            }
             break;
         case 'billing':
             initializeBillingSystem();
@@ -201,7 +208,7 @@ function loadStats() {
                     totalCustomers: response.totalCustomers || 0,
                     totalCashiers: response.totalCashiers || 0,
                     totalUsers: response.totalUsers || 0,
-                    totalBooks: data.books.length || 0,
+                    totalBooks: response.totalBooks || 0,
                     totalRevenue: 125000,
                     totalOrders: 48
                 };
@@ -210,7 +217,7 @@ function loadStats() {
                     totalCustomers: response.data.totalCustomers || 0,
                     totalCashiers: response.data.totalCashiers || 0,
                     totalUsers: response.data.totalUsers || 0,
-                    totalBooks: data.books.length || 0,
+                    totalBooks: response.data.totalBooks || 0,
                     totalRevenue: 125000,
                     totalOrders: 48
                 };
@@ -236,7 +243,7 @@ function loadStats() {
 }
 
 // ==============================================================================
-// CUSTOMER MANAGEMENT (UPDATED)
+// CUSTOMER MANAGEMENT
 // ==============================================================================
 
 function loadCustomers() {
@@ -289,7 +296,7 @@ function displayCustomers() {
     if (data.customers.length === 0) {
         const row = document.createElement('tr');
         row.innerHTML = `
-            <td colspan="7" style="text-align: center; padding: 20px; color: #64748b;">
+            <td colspan="6" style="text-align: center; padding: 20px; color: #64748b;">
                 <i class="fas fa-users" style="font-size: 2em; margin-bottom: 10px; display: block;"></i>
                 No customers found. <a href="#" onclick="showAddCustomerModal()" style="color: #2563eb;">Add the first customer</a>
             </td>
@@ -325,7 +332,7 @@ function displayCustomers() {
 }
 
 // ==============================================================================
-// CASHIER MANAGEMENT (UPDATED)
+// CASHIER MANAGEMENT
 // ==============================================================================
 
 function loadCashiers() {
@@ -378,7 +385,7 @@ function displayCashiers() {
     if (data.cashiers.length === 0) {
         const row = document.createElement('tr');
         row.innerHTML = `
-            <td colspan="7" style="text-align: center; padding: 20px; color: #64748b;">
+            <td colspan="6" style="text-align: center; padding: 20px; color: #64748b;">
                 <i class="fas fa-user-tie" style="font-size: 2em; margin-bottom: 10px; display: block;"></i>
                 No cashiers found. <a href="#" onclick="showAddCashierModal()" style="color: #2563eb;">Add the first cashier</a>
             </td>
@@ -411,6 +418,435 @@ function displayCashiers() {
     }
     
     console.log(`✅ Displayed ${data.cashiers.length} cashiers`);
+}
+
+// ==============================================================================
+// BOOK MANAGEMENT
+// ==============================================================================
+
+function loadBooks() {
+    console.log('📚 Loading books...');
+    
+    return makeApiCall('admin?action=getBooks')
+        .then(response => {
+            console.log('📚 Books response:', response);
+            
+            // Handle different response formats
+            let books = [];
+            if (Array.isArray(response)) {
+                books = response;
+            } else if (response.success && Array.isArray(response.data)) {
+                books = response.data;
+            } else if (response.data && Array.isArray(response.data)) {
+                books = response.data;
+            }
+            
+            data.books = books;
+            console.log(`✅ Loaded ${books.length} books`);
+            
+            if (currentPage === 'inventory') {
+                displayBooks();
+            }
+            
+            return books;
+        })
+        .catch(error => {
+            console.error('❌ Failed to load books:', error);
+            data.books = [];
+            if (currentPage === 'inventory') {
+                displayBooks();
+            }
+            return [];
+        });
+}
+// Replace your existing displayBooks() function with this updated version
+function displayBooks() {
+    console.log('🎨 Displaying books...');
+    
+    const tableBody = document.querySelector('#booksTable tbody');
+    if (!tableBody) {
+        console.error('❌ Books table body not found');
+        return;
+    }
+    
+    tableBody.innerHTML = '';
+    
+    if (data.books.length === 0) {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td colspan="8" style="text-align: center; padding: 20px; color: #64748b;">
+                <i class="fas fa-book" style="font-size: 2em; margin-bottom: 10px; display: block;"></i>
+                No books found. <a href="#" onclick="showAddBookModal()" style="color: #2563eb;">Add the first book</a>
+            </td>
+        `;
+        tableBody.appendChild(row);
+    } else {
+        data.books.forEach((book, index) => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${book.id}</td>
+                <td>${book.title}</td>
+                <td>${book.author}</td>
+                <td>${book.categoryName || 'No Category'}</td>
+                <td>₨ ${parseFloat(book.price).toLocaleString()}</td>
+                <td>
+                    <span class="stock-badge ${book.stock <= 5 ? 'low-stock' : 'normal-stock'}">
+                        ${book.stock}
+                    </span>
+                </td>
+                <td class="status-cell">
+                    <span class="book-status-badge ${book.status === 'active' ? 'active' : 'inactive'}">
+                        ${book.status || 'active'}
+                    </span>
+                </td>
+                <td>
+                    <button class="btn-sm btn-info" onclick="editBook(${book.id})" title="Edit Book">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn-sm btn-danger" onclick="deleteBook(${book.id})" title="Delete Book">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            `;
+            tableBody.appendChild(row);
+        });
+    }
+    
+    console.log(`✅ Displayed ${data.books.length} books`);
+}
+// ==============================================================================
+// CATEGORY MANAGEMENT
+// ==============================================================================
+
+function loadCategories() {
+    console.log('📂 Loading categories...');
+    
+    return makeApiCall('admin?action=getCategories')
+        .then(response => {
+            console.log('📂 Categories response:', response);
+            
+            // Handle different response formats
+            let categories = [];
+            if (Array.isArray(response)) {
+                categories = response;
+            } else if (response.success && Array.isArray(response.data)) {
+                categories = response.data;
+            } else if (response.data && Array.isArray(response.data)) {
+                categories = response.data;
+            }
+            
+            data.categories = categories;
+            console.log(`✅ Loaded ${categories.length} categories`);
+            
+            return categories;
+        })
+        .catch(error => {
+            console.error('❌ Failed to load categories:', error);
+            data.categories = [];
+            return [];
+        });
+}
+
+function loadCategoriesWithBookCount() {
+    console.log('📂 Loading categories with book count...');
+    
+    return makeApiCall('admin?action=getCategoriesWithBookCount')
+        .then(response => {
+            console.log('📂 Categories with book count response:', response);
+            
+            // Handle different response formats
+            let categories = [];
+            if (Array.isArray(response)) {
+                categories = response;
+            } else if (response.success && Array.isArray(response.data)) {
+                categories = response.data;
+            } else if (response.data && Array.isArray(response.data)) {
+                categories = response.data;
+            }
+            
+            // Update category chart
+            updateCategoryChart(categories);
+            
+            return categories;
+        })
+        .catch(error => {
+            console.error('❌ Failed to load categories with book count:', error);
+            return [];
+        });
+}
+
+// ==============================================================================
+// BOOK MODAL FUNCTIONS
+// ==============================================================================
+
+function showAddBookModal() {
+    const modalTitle = document.getElementById('modalTitle');
+    const modalBody = document.getElementById('modalBody');
+    
+    modalTitle.textContent = 'Add New Book';
+    modalBody.innerHTML = `
+        <form id="bookForm">
+            <div class="form-group">
+                <label>Title *</label>
+                <input type="text" id="bookTitle" required>
+            </div>
+            <div class="form-group">
+                <label>Author *</label>
+                <input type="text" id="bookAuthor" required>
+            </div>
+            <div class="form-group">
+                <label>ISBN</label>
+                <input type="text" id="bookIsbn" placeholder="Optional">
+            </div>
+            <div class="form-group">
+                <label>Category</label>
+                <select id="bookCategory">
+                    <option value="">Select Category</option>
+                    ${data.categories.map(cat => `<option value="${cat.id}">${cat.name}</option>`).join('')}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Or Add New Category</label>
+                <input type="text" id="newCategoryName" placeholder="Enter new category name">
+            </div>
+            <div class="form-group">
+                <label>Price (₨) *</label>
+                <input type="number" id="bookPrice" step="0.01" min="0" required>
+            </div>
+            <div class="form-group">
+                <label>Stock Quantity *</label>
+                <input type="number" id="bookStock" min="0" required>
+            </div>
+            <div class="form-group">
+                <label>Description</label>
+                <textarea id="bookDescription" rows="3" placeholder="Optional description"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Status</label>
+                <select id="bookStatus">
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                </select>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn-secondary" onclick="closeModal()">Cancel</button>
+                <button type="submit" class="btn-primary">Add Book</button>
+            </div>
+        </form>
+    `;
+    
+    showModal();
+    
+    // Handle category selection logic
+    const categorySelect = document.getElementById('bookCategory');
+    const newCategoryInput = document.getElementById('newCategoryName');
+    
+    categorySelect.addEventListener('change', function() {
+        if (this.value) {
+            newCategoryInput.disabled = true;
+            newCategoryInput.value = '';
+        } else {
+            newCategoryInput.disabled = false;
+        }
+    });
+    
+    newCategoryInput.addEventListener('input', function() {
+        if (this.value.trim()) {
+            categorySelect.disabled = true;
+            categorySelect.value = '';
+        } else {
+            categorySelect.disabled = false;
+        }
+    });
+    
+    // Handle form submission
+    document.getElementById('bookForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new URLSearchParams();
+        formData.append('action', 'addBook');
+        formData.append('title', document.getElementById('bookTitle').value);
+        formData.append('author', document.getElementById('bookAuthor').value);
+        formData.append('isbn', document.getElementById('bookIsbn').value);
+        formData.append('categoryId', document.getElementById('bookCategory').value);
+        formData.append('newCategoryName', document.getElementById('newCategoryName').value);
+        formData.append('price', document.getElementById('bookPrice').value);
+        formData.append('stock', document.getElementById('bookStock').value);
+        formData.append('description', document.getElementById('bookDescription').value);
+        formData.append('status', document.getElementById('bookStatus').value);
+        
+        makeApiCall('admin', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (response.success) {
+                showNotification(response.message, 'success');
+                closeModal();
+                loadBooks();
+                loadCategories();
+                loadStats();
+                loadCategoriesWithBookCount();
+            } else {
+                showNotification(response.message, 'error');
+            }
+        })
+        .catch(error => {
+            showNotification('Failed to add book', 'error');
+        });
+    });
+}
+
+function editBook(id) {
+    const book = data.books.find(b => b.id === id);
+    if (!book) {
+        showNotification('Book not found', 'error');
+        return;
+    }
+    
+    const modalTitle = document.getElementById('modalTitle');
+    const modalBody = document.getElementById('modalBody');
+    
+    modalTitle.textContent = 'Edit Book';
+    modalBody.innerHTML = `
+        <form id="bookForm">
+            <div class="form-group">
+                <label>Title *</label>
+                <input type="text" id="bookTitle" value="${book.title}" required>
+            </div>
+            <div class="form-group">
+                <label>Author *</label>
+                <input type="text" id="bookAuthor" value="${book.author}" required>
+            </div>
+            <div class="form-group">
+                <label>ISBN</label>
+                <input type="text" id="bookIsbn" value="${book.isbn || ''}" placeholder="Optional">
+            </div>
+            <div class="form-group">
+                <label>Category</label>
+                <select id="bookCategory">
+                    <option value="">Select Category</option>
+                    ${data.categories.map(cat => 
+                        `<option value="${cat.id}" ${cat.id === book.categoryId ? 'selected' : ''}>${cat.name}</option>`
+                    ).join('')}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Or Add New Category</label>
+                <input type="text" id="newCategoryName" placeholder="Enter new category name">
+            </div>
+            <div class="form-group">
+                <label>Price (₨) *</label>
+                <input type="number" id="bookPrice" step="0.01" min="0" value="${book.price}" required>
+            </div>
+            <div class="form-group">
+                <label>Stock Quantity *</label>
+                <input type="number" id="bookStock" min="0" value="${book.stock}" required>
+            </div>
+            <div class="form-group">
+                <label>Description</label>
+                <textarea id="bookDescription" rows="3" placeholder="Optional description">${book.description || ''}</textarea>
+            </div>
+            <div class="form-group">
+                <label>Status</label>
+                <select id="bookStatus">
+                    <option value="active" ${book.status === 'active' ? 'selected' : ''}>Active</option>
+                    <option value="inactive" ${book.status === 'inactive' ? 'selected' : ''}>Inactive</option>
+                </select>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn-secondary" onclick="closeModal()">Cancel</button>
+                <button type="submit" class="btn-primary">Update Book</button>
+            </div>
+        </form>
+    `;
+    
+    showModal();
+    
+    // Handle category selection logic
+    const categorySelect = document.getElementById('bookCategory');
+    const newCategoryInput = document.getElementById('newCategoryName');
+    
+    categorySelect.addEventListener('change', function() {
+        if (this.value) {
+            newCategoryInput.disabled = true;
+            newCategoryInput.value = '';
+        } else {
+            newCategoryInput.disabled = false;
+        }
+    });
+    
+    newCategoryInput.addEventListener('input', function() {
+        if (this.value.trim()) {
+            categorySelect.disabled = true;
+            categorySelect.value = '';
+        } else {
+            categorySelect.disabled = false;
+        }
+    });
+    
+    // Handle form submission
+    document.getElementById('bookForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new URLSearchParams();
+        formData.append('action', 'updateBook');
+        formData.append('id', id);
+        formData.append('title', document.getElementById('bookTitle').value);
+        formData.append('author', document.getElementById('bookAuthor').value);
+        formData.append('isbn', document.getElementById('bookIsbn').value);
+        formData.append('categoryId', document.getElementById('bookCategory').value);
+        formData.append('newCategoryName', document.getElementById('newCategoryName').value);
+        formData.append('price', document.getElementById('bookPrice').value);
+        formData.append('stock', document.getElementById('bookStock').value);
+        formData.append('description', document.getElementById('bookDescription').value);
+        formData.append('status', document.getElementById('bookStatus').value);
+        
+        makeApiCall('admin', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (response.success) {
+                showNotification(response.message, 'success');
+                closeModal();
+                loadBooks();
+                loadCategories();
+                loadCategoriesWithBookCount();
+            } else {
+                showNotification(response.message, 'error');
+            }
+        })
+        .catch(error => {
+            showNotification('Failed to update book', 'error');
+        });
+    });
+}
+
+function deleteBook(id) {
+    if (confirm('Are you sure you want to delete this book?')) {
+        const formData = new URLSearchParams();
+        formData.append('action', 'deleteBook');
+        formData.append('id', id);
+        
+        makeApiCall('admin', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (response.success) {
+                showNotification(response.message, 'success');
+                loadBooks();
+                loadStats();
+                loadCategoriesWithBookCount();
+            } else {
+                showNotification(response.message, 'error');
+            }
+        })
+        .catch(error => {
+            showNotification('Failed to delete book', 'error');
+        });
+    }
 }
 
 // ==============================================================================
@@ -515,6 +951,29 @@ function initializeCategoryChart() {
             }
         }
     });
+    
+    // Load real category data
+    loadCategoriesWithBookCount();
+}
+
+function updateCategoryChart(categories = null) {
+    if (!charts.categoryChart) return;
+    
+    if (categories && categories.length > 0) {
+        const colors = [
+            '#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6',
+            '#06b6d4', '#84cc16', '#f97316', '#ec4899', '#6366f1'
+        ];
+        
+        const labels = categories.map(cat => cat.name);
+        const data = categories.map(cat => cat.bookCount);
+        const backgroundColors = categories.map((cat, index) => colors[index % colors.length]);
+        
+        charts.categoryChart.data.labels = labels;
+        charts.categoryChart.data.datasets[0].data = data;
+        charts.categoryChart.data.datasets[0].backgroundColor = backgroundColors;
+        charts.categoryChart.update();
+    }
 }
 
 function updateSalesChart(period) {
@@ -550,19 +1009,6 @@ function updateSalesChart(period) {
 // DATA MANAGEMENT
 // ==============================================================================
 
-function loadInitialData() {
-    // Load dummy book data
-    data.books = [
-        { id: 1, title: 'Advanced Programming', author: 'John Smith', category: 'Programming', price: 2500, stock: 15 },
-        { id: 2, title: 'Mathematics Fundamentals', author: 'Sarah Davis', category: 'Mathematics', price: 1800, stock: 22 },
-        { id: 3, title: 'Physics Concepts', author: 'Michael Wilson', category: 'Science', price: 2200, stock: 18 },
-        { id: 4, title: 'English Literature', author: 'Emma Thompson', category: 'Literature', price: 1500, stock: 25 }
-    ];
-    
-    console.log('📊 Initial book data loaded');
-    return Promise.resolve(data.books);
-}
-
 function updateStats() {
     console.log('📊 Updating stats display...');
     
@@ -575,7 +1021,7 @@ function updateStats() {
         totalCustomers.textContent = data.stats.totalCustomers || 0;
     }
     if (totalBooks) {
-        totalBooks.textContent = data.stats.totalBooks || data.books.length || 0;
+        totalBooks.textContent = data.stats.totalBooks || 0;
     }
     if (totalRevenue) {
         totalRevenue.textContent = '₨ ' + (data.stats.totalRevenue || 0).toLocaleString();
@@ -705,7 +1151,7 @@ function updatePageTitle(page) {
 }
 
 // ==============================================================================
-// CUSTOMER MODAL FUNCTIONS (UPDATED)
+// CUSTOMER MODAL FUNCTIONS
 // ==============================================================================
 
 function showAddCustomerModal() {
@@ -887,7 +1333,7 @@ function deleteCustomer(id) {
 }
 
 // ==============================================================================
-// CASHIER MODAL FUNCTIONS (UPDATED)
+// CASHIER MODAL FUNCTIONS
 // ==============================================================================
 
 function showAddCashierModal() {
@@ -1069,50 +1515,6 @@ function deleteCashier(id) {
 }
 
 // ==============================================================================
-// INVENTORY MANAGEMENT
-// ==============================================================================
-
-function loadBooks() {
-    const tableBody = document.querySelector('#booksTable tbody');
-    if (!tableBody) return;
-    
-    tableBody.innerHTML = '';
-    
-    data.books.forEach(book => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>${book.id}</td>
-            <td>${book.title}</td>
-            <td>${book.author}</td>
-            <td>${book.category}</td>
-            <td>₨ ${book.price.toLocaleString()}</td>
-            <td>${book.stock}</td>
-            <td>
-                <button class="btn-sm btn-info" onclick="editBook(${book.id})">
-                    <i class="fas fa-edit"></i>
-                </button>
-                <button class="btn-sm btn-danger" onclick="deleteBook(${book.id})">
-                    <i class="fas fa-trash"></i>
-                </button>
-            </td>
-        `;
-        tableBody.appendChild(row);
-    });
-}
-
-function showAddBookModal() {
-    showNotification('Book management will be implemented in the next phase', 'info');
-}
-
-function editBook(id) {
-    showNotification('Book editing will be implemented in the next phase', 'info');
-}
-
-function deleteBook(id) {
-    showNotification('Book deletion will be implemented in the next phase', 'info');
-}
-
-// ==============================================================================
 // BILLING SYSTEM
 // ==============================================================================
 
@@ -1280,6 +1682,7 @@ function debugDataState() {
     console.log('├── Customers:', data.customers.length);
     console.log('├── Cashiers:', data.cashiers.length);
     console.log('├── Books:', data.books.length);
+    console.log('├── Categories:', data.categories.length);
     console.log('├── Stats:', data.stats);
     console.log('└── Current Page:', currentPage);
 }
@@ -1289,7 +1692,7 @@ function refreshAllData() {
     loadAllData();
 }
 
-// Add CSS animations and styles
+// Add CSS animations and styles for inventory
 const style = document.createElement('style');
 style.textContent = `
     @keyframes slideInRight {
@@ -1326,6 +1729,24 @@ style.textContent = `
     .badge.inactive {
         background: #ef4444;
         color: white;
+    }
+    .stock-badge {
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+        color: white;
+    }
+    .stock-badge.normal-stock {
+        background: #10b981;
+    }
+    .stock-badge.low-stock {
+        background: #ef4444;
+        animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
     }
     .btn-sm {
         padding: 6px 12px;
@@ -1365,12 +1786,16 @@ style.textContent = `
         margin-bottom: 5px;
         font-weight: 500;
     }
-    .form-group input, .form-group select {
+    .form-group input, .form-group select, .form-group textarea {
         width: 100%;
         padding: 10px;
         border: 1px solid #d1d5db;
         border-radius: 6px;
         box-sizing: border-box;
+    }
+    .form-group textarea {
+        resize: vertical;
+        font-family: inherit;
     }
 `;
 document.head.appendChild(style);
@@ -1382,7 +1807,7 @@ document.head.appendChild(style);
 // Console logging for debugging
 console.log('🎯 Admin Dashboard Functions Available:');
 console.log('├── Navigation: navigateToPage(page)');
-console.log('├── Data Loading: loadAllData(), loadCustomers(), loadCashiers()');
+console.log('├── Data Loading: loadAllData(), loadCustomers(), loadCashiers(), loadBooks(), loadCategories()');
 console.log('├── Customers: showAddCustomerModal(), editCustomer(id), deleteCustomer(id)');
 console.log('├── Cashiers: showAddCashierModal(), editCashier(id), deleteCashier(id)');
 console.log('├── Books: showAddBookModal(), editBook(id), deleteBook(id)');
@@ -1403,6 +1828,8 @@ window.adminDashboard = {
     loadAllData,
     loadCustomers,
     loadCashiers,
+    loadBooks,
+    loadCategories,
     showAddCustomerModal,
     showAddCashierModal,
     showAddBookModal,

@@ -1,7 +1,10 @@
+// File: src/main/java/com/pahanaedu/servlets/AdminServlet.java
+// Updated AdminServlet with Inventory Management
 package com.pahanaedu.servlets;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.math.BigDecimal;
 import java.util.List;
 
 import javax.servlet.ServletException;
@@ -13,17 +16,25 @@ import javax.servlet.http.HttpSession;
 
 import com.google.gson.Gson;
 import com.pahanaedu.dao.UserDAO;
+import com.pahanaedu.dao.BookDAO;
+import com.pahanaedu.dao.CategoryDAO;
 import com.pahanaedu.models.User;
+import com.pahanaedu.models.Book;
+import com.pahanaedu.models.Category;
 
 @WebServlet("/admin")
 public class AdminServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
     private UserDAO userDAO;
+    private BookDAO bookDAO;
+    private CategoryDAO categoryDAO;
     private Gson gson;
     
     @Override
     public void init() throws ServletException {
         userDAO = new UserDAO();
+        bookDAO = new BookDAO();
+        categoryDAO = new CategoryDAO();
         gson = new Gson();
     }
     
@@ -51,6 +62,22 @@ public class AdminServlet extends HttpServlet {
                 break;
             case "getStats":
                 getStats(response);
+                break;
+            // Inventory Management GET actions
+            case "getBooks":
+                getBooks(response);
+                break;
+            case "getBook":
+                getBook(request, response);
+                break;
+            case "getCategories":
+                getCategories(response);
+                break;
+            case "getCategoriesWithBookCount":
+                getCategoriesWithBookCount(response);
+                break;
+            case "getCategory":
+                getCategory(request, response);
                 break;
             default:
                 sendErrorResponse(response, "Invalid action");
@@ -81,6 +108,25 @@ public class AdminServlet extends HttpServlet {
                 break;
             case "deleteUser":
                 deleteUser(request, response);
+                break;
+            // Inventory Management POST actions
+            case "addBook":
+                addBook(request, response);
+                break;
+            case "updateBook":
+                updateBook(request, response);
+                break;
+            case "deleteBook":
+                deleteBook(request, response);
+                break;
+            case "addCategory":
+                addCategory(request, response);
+                break;
+            case "updateCategory":
+                updateCategory(request, response);
+                break;
+            case "deleteCategory":
+                deleteCategory(request, response);
                 break;
             default:
                 sendErrorResponse(response, "Invalid action");
@@ -269,17 +315,355 @@ public class AdminServlet extends HttpServlet {
         }
     }
     
+    // ========== BOOK OPERATIONS ==========
+    
+    private void getBooks(HttpServletResponse response) throws IOException {
+        List<Book> books = bookDAO.getAllBooks();
+        sendJsonResponse(response, books);
+    }
+    
+    private void getBook(HttpServletRequest request, HttpServletResponse response) 
+            throws IOException {
+        
+        String idParam = request.getParameter("id");
+        if (isEmpty(idParam)) {
+            sendErrorResponse(response, "Book ID is required");
+            return;
+        }
+        
+        try {
+            int id = Integer.parseInt(idParam);
+            Book book = bookDAO.getBookById(id);
+            
+            if (book != null) {
+                sendJsonResponse(response, book);
+            } else {
+                sendErrorResponse(response, "Book not found");
+            }
+        } catch (NumberFormatException e) {
+            sendErrorResponse(response, "Invalid book ID");
+        }
+    }
+    
+    private void addBook(HttpServletRequest request, HttpServletResponse response) 
+            throws IOException {
+        
+        String title = request.getParameter("title");
+        String author = request.getParameter("author");
+        String isbn = request.getParameter("isbn");
+        String categoryIdParam = request.getParameter("categoryId");
+        String newCategoryName = request.getParameter("newCategoryName");
+        String priceParam = request.getParameter("price");
+        String stockParam = request.getParameter("stock");
+        String description = request.getParameter("description");
+        String status = request.getParameter("status");
+        
+        // Validation
+        if (isEmpty(title) || isEmpty(author) || isEmpty(priceParam) || isEmpty(stockParam)) {
+            sendErrorResponse(response, "Title, author, price, and stock are required");
+            return;
+        }
+        
+        // Check ISBN if provided
+        if (!isEmpty(isbn) && bookDAO.isbnExists(isbn)) {
+            sendErrorResponse(response, "ISBN already exists");
+            return;
+        }
+        
+        try {
+            BigDecimal price = new BigDecimal(priceParam);
+            int stock = Integer.parseInt(stockParam);
+            int categoryId = 0;
+            
+            // Handle category - either existing or new
+            if (!isEmpty(newCategoryName)) {
+                // Check if category already exists
+                Category existingCategory = categoryDAO.getCategoryByName(newCategoryName);
+                if (existingCategory != null) {
+                    categoryId = existingCategory.getId();
+                } else {
+                    // Create new category
+                    Category newCategory = new Category();
+                    newCategory.setName(newCategoryName);
+                    newCategory.setDescription("Auto-created category");
+                    newCategory.setStatus(Category.STATUS_ACTIVE);
+                    
+                    categoryId = categoryDAO.createCategoryAndGetId(newCategory);
+                    if (categoryId == -1) {
+                        sendErrorResponse(response, "Failed to create new category");
+                        return;
+                    }
+                }
+            } else if (!isEmpty(categoryIdParam)) {
+                categoryId = Integer.parseInt(categoryIdParam);
+            }
+            
+            // Create book
+            Book book = new Book();
+            book.setTitle(title);
+            book.setAuthor(author);
+            book.setIsbn(isbn);
+            book.setCategoryId(categoryId);
+            book.setPrice(price);
+            book.setStock(stock);
+            book.setDescription(description);
+            book.setStatus(status != null ? status : Book.STATUS_ACTIVE);
+            
+            if (bookDAO.createBook(book)) {
+                sendSuccessResponse(response, "Book added successfully");
+            } else {
+                sendErrorResponse(response, "Failed to add book");
+            }
+            
+        } catch (NumberFormatException e) {
+            sendErrorResponse(response, "Invalid price, stock, or category ID");
+        }
+    }
+    
+    private void updateBook(HttpServletRequest request, HttpServletResponse response) 
+            throws IOException {
+        
+        String idParam = request.getParameter("id");
+        String title = request.getParameter("title");
+        String author = request.getParameter("author");
+        String isbn = request.getParameter("isbn");
+        String categoryIdParam = request.getParameter("categoryId");
+        String newCategoryName = request.getParameter("newCategoryName");
+        String priceParam = request.getParameter("price");
+        String stockParam = request.getParameter("stock");
+        String description = request.getParameter("description");
+        String status = request.getParameter("status");
+        
+        // Validation
+        if (isEmpty(idParam) || isEmpty(title) || isEmpty(author) || 
+            isEmpty(priceParam) || isEmpty(stockParam)) {
+            sendErrorResponse(response, "All required fields must be provided");
+            return;
+        }
+        
+        try {
+            int id = Integer.parseInt(idParam);
+            BigDecimal price = new BigDecimal(priceParam);
+            int stock = Integer.parseInt(stockParam);
+            int categoryId = 0;
+            
+            // Check ISBN if provided
+            if (!isEmpty(isbn) && bookDAO.isbnExistsExcluding(isbn, id)) {
+                sendErrorResponse(response, "ISBN already exists");
+                return;
+            }
+            
+            // Handle category - either existing or new
+            if (!isEmpty(newCategoryName)) {
+                // Check if category already exists
+                Category existingCategory = categoryDAO.getCategoryByName(newCategoryName);
+                if (existingCategory != null) {
+                    categoryId = existingCategory.getId();
+                } else {
+                    // Create new category
+                    Category newCategory = new Category();
+                    newCategory.setName(newCategoryName);
+                    newCategory.setDescription("Auto-created category");
+                    newCategory.setStatus(Category.STATUS_ACTIVE);
+                    
+                    categoryId = categoryDAO.createCategoryAndGetId(newCategory);
+                    if (categoryId == -1) {
+                        sendErrorResponse(response, "Failed to create new category");
+                        return;
+                    }
+                }
+            } else if (!isEmpty(categoryIdParam)) {
+                categoryId = Integer.parseInt(categoryIdParam);
+            }
+            
+            // Update book
+            Book book = new Book();
+            book.setId(id);
+            book.setTitle(title);
+            book.setAuthor(author);
+            book.setIsbn(isbn);
+            book.setCategoryId(categoryId);
+            book.setPrice(price);
+            book.setStock(stock);
+            book.setDescription(description);
+            book.setStatus(status != null ? status : Book.STATUS_ACTIVE);
+            
+            if (bookDAO.updateBook(book)) {
+                sendSuccessResponse(response, "Book updated successfully");
+            } else {
+                sendErrorResponse(response, "Failed to update book");
+            }
+            
+        } catch (NumberFormatException e) {
+            sendErrorResponse(response, "Invalid ID, price, stock, or category ID");
+        }
+    }
+    
+    private void deleteBook(HttpServletRequest request, HttpServletResponse response) 
+            throws IOException {
+        
+        String idParam = request.getParameter("id");
+        if (isEmpty(idParam)) {
+            sendErrorResponse(response, "Book ID is required");
+            return;
+        }
+        
+        try {
+            int id = Integer.parseInt(idParam);
+            
+            if (bookDAO.deleteBook(id)) {
+                sendSuccessResponse(response, "Book deleted successfully");
+            } else {
+                sendErrorResponse(response, "Failed to delete book");
+            }
+            
+        } catch (NumberFormatException e) {
+            sendErrorResponse(response, "Invalid book ID");
+        }
+    }
+    
+    // ========== CATEGORY OPERATIONS ==========
+    
+    private void getCategories(HttpServletResponse response) throws IOException {
+        List<Category> categories = categoryDAO.getAllCategories();
+        sendJsonResponse(response, categories);
+    }
+    
+    private void getCategoriesWithBookCount(HttpServletResponse response) throws IOException {
+        List<Category> categories = categoryDAO.getCategoriesWithBookCount();
+        sendJsonResponse(response, categories);
+    }
+    
+    private void getCategory(HttpServletRequest request, HttpServletResponse response) 
+            throws IOException {
+        
+        String idParam = request.getParameter("id");
+        if (isEmpty(idParam)) {
+            sendErrorResponse(response, "Category ID is required");
+            return;
+        }
+        
+        try {
+            int id = Integer.parseInt(idParam);
+            Category category = categoryDAO.getCategoryById(id);
+            
+            if (category != null) {
+                sendJsonResponse(response, category);
+            } else {
+                sendErrorResponse(response, "Category not found");
+            }
+        } catch (NumberFormatException e) {
+            sendErrorResponse(response, "Invalid category ID");
+        }
+    }
+    
+    private void addCategory(HttpServletRequest request, HttpServletResponse response) 
+            throws IOException {
+        
+        String name = request.getParameter("name");
+        String description = request.getParameter("description");
+        String status = request.getParameter("status");
+        
+        // Validation
+        if (isEmpty(name)) {
+            sendErrorResponse(response, "Category name is required");
+            return;
+        }
+        
+        if (categoryDAO.categoryNameExists(name)) {
+            sendErrorResponse(response, "Category name already exists");
+            return;
+        }
+        
+        // Create category
+        Category category = new Category();
+        category.setName(name);
+        category.setDescription(description);
+        category.setStatus(status != null ? status : Category.STATUS_ACTIVE);
+        
+        if (categoryDAO.createCategory(category)) {
+            sendSuccessResponse(response, "Category added successfully");
+        } else {
+            sendErrorResponse(response, "Failed to add category");
+        }
+    }
+    
+    private void updateCategory(HttpServletRequest request, HttpServletResponse response) 
+            throws IOException {
+        
+        String idParam = request.getParameter("id");
+        String name = request.getParameter("name");
+        String description = request.getParameter("description");
+        String status = request.getParameter("status");
+        
+        // Validation
+        if (isEmpty(idParam) || isEmpty(name)) {
+            sendErrorResponse(response, "Category ID and name are required");
+            return;
+        }
+        
+        try {
+            int id = Integer.parseInt(idParam);
+            
+            // Check if name exists for other categories
+            if (categoryDAO.categoryNameExistsExcluding(name, id)) {
+                sendErrorResponse(response, "Category name already exists");
+                return;
+            }
+            
+            Category category = new Category();
+            category.setId(id);
+            category.setName(name);
+            category.setDescription(description);
+            category.setStatus(status != null ? status : Category.STATUS_ACTIVE);
+            
+            if (categoryDAO.updateCategory(category)) {
+                sendSuccessResponse(response, "Category updated successfully");
+            } else {
+                sendErrorResponse(response, "Failed to update category");
+            }
+            
+        } catch (NumberFormatException e) {
+            sendErrorResponse(response, "Invalid category ID");
+        }
+    }
+    
+    private void deleteCategory(HttpServletRequest request, HttpServletResponse response) 
+            throws IOException {
+        
+        String idParam = request.getParameter("id");
+        if (isEmpty(idParam)) {
+            sendErrorResponse(response, "Category ID is required");
+            return;
+        }
+        
+        try {
+            int id = Integer.parseInt(idParam);
+            
+            if (categoryDAO.deleteCategory(id)) {
+                sendSuccessResponse(response, "Category deleted successfully");
+            } else {
+                sendErrorResponse(response, "Cannot delete category. It may contain books or not exist.");
+            }
+            
+        } catch (NumberFormatException e) {
+            sendErrorResponse(response, "Invalid category ID");
+        }
+    }
+    
     // ========== STATISTICS ==========
     
     private void getStats(HttpServletResponse response) throws IOException {
         int customerCount = userDAO.getUserCountByRole(User.ROLE_CUSTOMER);
         int cashierCount = userDAO.getUserCountByRole(User.ROLE_CASHIER);
+        int bookCount = bookDAO.getTotalBooksCount();
         
         // Create stats object
         AdminStats stats = new AdminStats();
         stats.totalCustomers = customerCount;
         stats.totalCashiers = cashierCount;
         stats.totalUsers = customerCount + cashierCount;
+        stats.totalBooks = bookCount;
         
         sendJsonResponse(response, stats);
     }
@@ -335,5 +719,6 @@ public class AdminServlet extends HttpServlet {
         public int totalCustomers;
         public int totalCashiers;
         public int totalUsers;
+        public int totalBooks;
     }
 }
