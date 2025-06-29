@@ -385,18 +385,21 @@
             </div>
 
 			<!-- Replace your inventory-content div in admin.jsp with this -->
-			<div class="page-content" id="inventory-content" style="display: none;">
-			    <div class="content-header">
-			        <h2>Inventory Management</h2>
-			        <div class="header-actions">
-			            <button class="btn-secondary" onclick="viewOutOfStockBooks()" title="View Out of Stock Books">
-			                <i class="fas fa-exclamation-triangle"></i> Out of Stock
-			            </button>
-			            <button class="btn-primary" onclick="showAddBookModal()">
-			                <i class="fas fa-plus"></i> Add Book
-			            </button>
-			        </div>
-			    </div>
+				<div class="page-content" id="inventory-content" style="display: none;">
+				    <div class="content-header">
+				        <h2>Inventory Management</h2>
+				        <div class="header-actions">
+				            <button class="btn-primary" onclick="showAddBookModal()">
+				                <i class="fas fa-plus"></i> Add Book
+				            </button>
+				            <form action="book-references.jsp" method="get" style="display: inline; margin-left: 10px;">
+				                <button type="submit" class="btn-secondary">
+				                    <i class="fas fa-book"></i> Book References
+				                </button>
+				            </form>
+				        </div>
+				    </div>
+				</div>
 			    
 			    <!-- Stats Summary -->
 			    <div class="inventory-stats">

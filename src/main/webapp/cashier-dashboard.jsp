@@ -17,270 +17,462 @@
     String userName = (String) session.getAttribute("userName");
     String userEmail = (String) session.getAttribute("userEmail");
     String firstName = (String) session.getAttribute("userFirstName");
+    String lastName = (String) session.getAttribute("userLastName");
+    
+    if (firstName == null) firstName = "Cashier";
+    if (lastName == null) lastName = "User";
 %>
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Cashier Dashboard - Pahana Edu</title>
-    <!-- External CSS Links -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pahana Edu - Cashier Dashboard</title>
+    
+    <!-- External CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
     <!-- Custom CSS -->
-    <link href="css/style.css" rel="stylesheet">
-    <link href="css/dashboard.css" rel="stylesheet">
-    <link href="css/cashier.css" rel="stylesheet">
+    <link href="css/cashier-dashboard.css" rel="stylesheet">
 </head>
 <body>
-    <!-- Cashier Header -->
-    <header class="header cashier-header" id="header">
-        <nav class="nav-container">
-            <a href="#" class="logo">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
                 <i class="fas fa-cash-register"></i>
-                Pahana Edu - Cashier
-            </a>
-
-            <ul class="nav-menu">
-                <li><a href="#dashboard">Dashboard</a></li>
-                <li><a href="#billing">Billing</a></li>
-                <li><a href="#inventory">Inventory</a></li>
-                <li><a href="#customers">Customers</a></li>
-                <li><a href="#reports">Reports</a></li>
+                <span class="logo-text">Pahana Edu</span>
+            </div>
+            <button class="sidebar-toggle" id="sidebarToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+        
+        <div class="cashier-profile">
+            <div class="profile-avatar">
+                <i class="fas fa-user-tie"></i>
+            </div>
+            <div class="profile-info">
+                <h4><%= firstName %> <%= lastName %></h4>
+                <span>Cashier</span>
+            </div>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <ul>
+                <li class="nav-item active">
+                    <a href="#" class="nav-link" data-page="dashboard">
+                        <i class="fas fa-tachometer-alt"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" data-page="customers">
+                        <i class="fas fa-users"></i>
+                        <span>Customer Management</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" data-page="inventory">
+                        <i class="fas fa-boxes"></i>
+                        <span>Item Management</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" data-page="billing">
+                        <i class="fas fa-calculator"></i>
+                        <span>Billing System</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" data-page="help">
+                        <i class="fas fa-question-circle"></i>
+                        <span>Help & Support</span>
+                    </a>
+                </li>
+                <li class="nav-item logout">
+                    <a href="logout.jsp" class="nav-link" onclick="return confirm('Are you sure you want to logout?')">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Logout</span>
+                    </a>
+                </li>
             </ul>
-
-            <div class="nav-actions logged-in">
-                <div class="user-info cashier-info">
-                    <div class="user-avatar cashier-avatar">
-                        <i class="fas fa-user-tie"></i>
-                    </div>
-                    <div class="user-details">
-                        <span class="user-name">Cashier: <%= firstName %></span>
-                        <span class="user-email"><%= userEmail %></span>
-                    </div>
-                </div>
-                <div class="user-menu">
-                    <button class="user-menu-toggle" id="userMenuToggle">
-                        <i class="fas fa-chevron-down"></i>
-                    </button>
-                    <div class="user-dropdown" id="userDropdown">
-                        <a href="#settings" class="dropdown-item">
-                            <i class="fas fa-cog"></i>
-                            Settings
-                        </a>
-                        <a href="#shift" class="dropdown-item">
-                            <i class="fas fa-clock"></i>
-                            Shift Info
-                        </a>
-                        <a href="#help" class="dropdown-item">
-                            <i class="fas fa-question-circle"></i>
-                            Help
-                        </a>
-                        <div class="dropdown-divider"></div>
-                        <a href="logout.jsp" class="dropdown-item logout">
-                            <i class="fas fa-sign-out-alt"></i>
-                            Logout
-                        </a>
-                    </div>
-                </div>
-            </div>
-
-            <div class="mobile-menu-toggle">
-                <span></span>
-                <span></span>
-                <span></span>
-            </div>
         </nav>
-    </header>
-
-    <!-- Cashier Dashboard Hero -->
-    <section class="cashier-hero" id="dashboard">
-        <div class="cashier-hero-container">
-            <div class="welcome-section">
-                <h1 class="welcome-title">Welcome, <%= firstName %>!</h1>
-                <p class="welcome-subtitle">Manage sales, inventory, and customer service efficiently.</p>
-                <div class="cashier-stats">
-                    <div class="stat-card cashier-stat">
-                        <div class="stat-icon">
-                            <i class="fas fa-rupee-sign"></i>
-                        </div>
-                        <div class="stat-info">
-                            <span class="stat-number">₨ 0</span>
-                            <span class="stat-label">Today's Sales</span>
-                        </div>
+    </aside>
+    
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <h1 id="pageTitle">Dashboard</h1>
+                <p id="pageSubtitle">Welcome to your cashier control panel</p>
+            </div>
+            <div class="header-right">
+                <div class="current-time" id="currentTime"></div>
+                <div class="cashier-info">
+                    <span><%= userEmail %></span>
+                    <div class="cashier-avatar">
+                        <i class="fas fa-user"></i>
                     </div>
-                    <div class="stat-card cashier-stat">
-                        <div class="stat-icon">
-                            <i class="fas fa-receipt"></i>
-                        </div>
-                        <div class="stat-info">
-                            <span class="stat-number">0</span>
-                            <span class="stat-label">Transactions</span>
-                        </div>
-                    </div>
-                    <div class="stat-card cashier-stat">
+                </div>
+            </div>
+        </header>
+        
+        <!-- Content Area -->
+        <div class="content" id="mainContent">
+            <!-- Dashboard Content -->
+            <div class="page-content active" id="dashboard-content">
+                <!-- Quick Stats -->
+                <div class="stats-grid">
+                    <div class="stat-card">
                         <div class="stat-icon">
                             <i class="fas fa-users"></i>
                         </div>
-                        <div class="stat-info">
-                            <span class="stat-number">0</span>
-                            <span class="stat-label">Customers</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Cashier Quick Actions -->
-    <section class="cashier-actions">
-        <div class="cashier-actions-container">
-            <h2 class="section-title">Cashier Operations</h2>
-            <div class="actions-grid">
-                <div class="action-card cashier-action">
-                    <div class="action-icon">
-                        <i class="fas fa-cash-register"></i>
-                    </div>
-                    <h3>New Sale</h3>
-                    <p>Process a new sale transaction</p>
-                    <a href="#billing" class="action-btn">Start Billing</a>
-                </div>
-                
-                <div class="action-card cashier-action">
-                    <div class="action-icon">
-                        <i class="fas fa-search"></i>
-                    </div>
-                    <h3>Find Product</h3>
-                    <p>Search for books and check availability</p>
-                    <a href="#inventory" class="action-btn">Search Books</a>
-                </div>
-                
-                <div class="action-card cashier-action">
-                    <div class="action-icon">
-                        <i class="fas fa-user-plus"></i>
-                    </div>
-                    <h3>Customer Info</h3>
-                    <p>Manage customer information and history</p>
-                    <a href="#customers" class="action-btn">View Customers</a>
-                </div>
-                
-                <div class="action-card cashier-action">
-                    <div class="action-icon">
-                        <i class="fas fa-chart-bar"></i>
-                    </div>
-                    <h3>Daily Report</h3>
-                    <p>View sales report and statistics</p>
-                    <a href="#reports" class="action-btn">View Reports</a>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Billing Section -->
-    <section class="billing-section" id="billing">
-        <div class="billing-container">
-            <h2 class="section-title">Billing System</h2>
-            <div class="billing-interface">
-                <div class="product-search">
-                    <div class="search-box">
-                        <input type="text" id="productSearch" placeholder="Search for books by title, author, or ISBN...">
-                        <button class="search-btn"><i class="fas fa-search"></i></button>
-                    </div>
-                </div>
-                
-                <div class="billing-content">
-                    <div class="bill-items">
-                        <h3>Current Bill</h3>
-                        <div class="bill-list" id="billList">
-                            <div class="empty-bill">
-                                <i class="fas fa-receipt"></i>
-                                <p>No items in current bill</p>
-                            </div>
+                        <div class="stat-content">
+                            <h3 id="totalCustomers">0</h3>
+                            <p>Total Customers</p>
                         </div>
                     </div>
                     
-                    <div class="bill-summary">
-                        <h3>Bill Summary</h3>
-                        <div class="summary-row">
-                            <span>Subtotal:</span>
-                            <span id="subtotal">₨ 0.00</span>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-boxes"></i>
                         </div>
-                        <div class="summary-row">
-                            <span>Tax (VAT):</span>
-                            <span id="tax">₨ 0.00</span>
+                        <div class="stat-content">
+                            <h3 id="totalItems">0</h3>
+                            <p>Available Items</p>
                         </div>
-                        <div class="summary-row total">
-                            <span>Total:</span>
-                            <span id="total">₨ 0.00</span>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-receipt"></i>
                         </div>
-                        <div class="bill-actions">
-                            <button class="btn-clear">Clear Bill</button>
-                            <button class="btn-print">Print Bill</button>
+                        <div class="stat-content">
+                            <h3 id="todayBills">0</h3>
+                            <p>Today's Bills</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="todayRevenue">₨ 0</h3>
+                            <p>Today's Revenue</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Quick Actions -->
+                <div class="quick-actions">
+                    <h3>Quick Actions</h3>
+                    <div class="action-grid">
+                        <button class="action-btn" onclick="navigateToPage('customers')">
+                            <i class="fas fa-user-plus"></i>
+                            <span>Add Customer</span>
+                        </button>
+                        <button class="action-btn" onclick="navigateToPage('inventory')">
+                            <i class="fas fa-plus-circle"></i>
+                            <span>Add Item</span>
+                        </button>
+                        <button class="action-btn" onclick="navigateToPage('billing')">
+                            <i class="fas fa-calculator"></i>
+                            <span>Create Bill</span>
+                        </button>
+                        <button class="action-btn" onclick="showCustomerSearch()">
+                            <i class="fas fa-search"></i>
+                            <span>Find Customer</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Recent Activities -->
+                <div class="recent-activities">
+                    <h3>Recent Activities</h3>
+                    <div class="activity-list" id="activityList">
+                        <div class="activity-item">
+                            <div class="activity-icon">
+                                <i class="fas fa-user-plus"></i>
+                            </div>
+                            <div class="activity-content">
+                                <p>New customer registered</p>
+                                <span class="activity-time">Just now</span>
+                            </div>
+                        </div>
+                        <div class="activity-item">
+                            <div class="activity-icon">
+                                <i class="fas fa-receipt"></i>
+                            </div>
+                            <div class="activity-content">
+                                <p>Bill generated for Customer #001</p>
+                                <span class="activity-time">5 minutes ago</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Customer Management Content -->
+            <div class="page-content" id="customers-content">
+                <div class="content-header">
+                    <h2>Customer Management</h2>
+                    <button class="btn-primary" onclick="showAddCustomerModal()">
+                        <i class="fas fa-plus"></i> Add New Customer
+                    </button>
+                </div>
+                
+                <div class="search-section">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="customerSearch" placeholder="Search customers by name, email, or phone...">
+                    </div>
+                </div>
+                
+                <div class="table-container">
+                    <table class="data-table" id="customersTable">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Customer data will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Inventory Management Content -->
+            <div class="page-content" id="inventory-content">
+                <div class="content-header">
+                    <h2>Item Management</h2>
+                    <button class="btn-primary" onclick="showAddItemModal()">
+                        <i class="fas fa-plus"></i> Add New Item
+                    </button>
+                </div>
+                
+                <div class="search-section">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="itemSearch" placeholder="Search items by title, author, or category...">
+                    </div>
+                </div>
+                
+                <div class="table-container">
+                    <table class="data-table" id="itemsTable">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Title</th>
+                                <th>Author</th>
+                                <th>Category</th>
+                                <th>Price</th>
+                                <th>Stock</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Item data will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Billing System Content -->
+            <div class="page-content" id="billing-content">
+                <div class="billing-container">
+                    <div class="billing-header">
+                        <h2>Billing System</h2>
+                        <button class="btn-secondary" onclick="clearBill()">
+                            <i class="fas fa-trash"></i> Clear Bill
+                        </button>
+                    </div>
+                    
+                    <div class="billing-form">
+                        <div class="customer-selection">
+                            <h3>Customer Information</h3>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Select Customer</label>
+                                    <select id="billingCustomer" onchange="loadCustomerInfo()">
+                                        <option value="">Select a customer...</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Bill Date</label>
+                                    <input type="date" id="billingDate">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="items-selection">
+                            <h3>Add Items</h3>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Select Item</label>
+                                    <select id="itemSelect">
+                                        <option value="">Select an item...</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Quantity</label>
+                                    <input type="number" id="itemQuantity" min="1" value="1">
+                                </div>
+                                <div class="form-group">
+                                    <button type="button" class="btn-primary" onclick="addItemToBill()">
+                                        <i class="fas fa-plus"></i> Add Item
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bill-items" id="billItems">
+                            <h3>Bill Items</h3>
+                            <table class="bill-table">
+                                <thead>
+                                    <tr>
+                                        <th>Item</th>
+                                        <th>Price</th>
+                                        <th>Qty</th>
+                                        <th>Total</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="billItemsList">
+                                    <tr class="no-items">
+                                        <td colspan="5">No items added to bill</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="bill-summary">
+                            <div class="summary-row">
+                                <span>Subtotal:</span>
+                                <span id="billSubtotal">₨ 0.00</span>
+                            </div>
+                            <div class="summary-row">
+                                <span>Tax (18%):</span>
+                                <span id="billTax">₨ 0.00</span>
+                            </div>
+                            <div class="summary-row total">
+                                <span>Total:</span>
+                                <span id="billTotal">₨ 0.00</span>
+                            </div>
+                        </div>
+                        
+                        <div class="billing-actions">
+                            <button class="btn-success" onclick="generateBill()" id="generateBillBtn" disabled>
+                                <i class="fas fa-receipt"></i> Generate Bill
+                            </button>
+                            <button class="btn-primary" onclick="printBill()" id="printBillBtn" disabled>
+                                <i class="fas fa-print"></i> Print Bill
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Help Content -->
+            <div class="page-content" id="help-content">
+                <div class="help-container">
+                    <h2>Help & Support</h2>
+                    
+                    <div class="help-sections">
+                        <div class="help-card">
+                            <div class="help-icon">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="help-content">
+                                <h3>Customer Management</h3>
+                                <ul>
+                                    <li>Click "Add New Customer" to register new customers</li>
+                                    <li>Use the search box to find existing customers</li>
+                                    <li>Click the edit icon to update customer information</li>
+                                    <li>View complete customer details by clicking the view icon</li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div class="help-card">
+                            <div class="help-icon">
+                                <i class="fas fa-boxes"></i>
+                            </div>
+                            <div class="help-content">
+                                <h3>Item Management</h3>
+                                <ul>
+                                    <li>Add new items using the "Add New Item" button</li>
+                                    <li>Update item details by clicking the edit icon</li>
+                                    <li>Remove items using the delete button (use carefully)</li>
+                                    <li>Search items by title, author, or category</li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div class="help-card">
+                            <div class="help-icon">
+                                <i class="fas fa-calculator"></i>
+                            </div>
+                            <div class="help-content">
+                                <h3>Billing System</h3>
+                                <ul>
+                                    <li>Select customer and date before adding items</li>
+                                    <li>Add items one by one with required quantities</li>
+                                    <li>Review bill summary before generating</li>
+                                    <li>Print bills for customer records</li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div class="help-card">
+                            <div class="help-icon">
+                                <i class="fas fa-keyboard"></i>
+                            </div>
+                            <div class="help-content">
+                                <h3>Keyboard Shortcuts</h3>
+                                <ul>
+                                    <li><kbd>Ctrl + N</kbd> - Add new customer/item</li>
+                                    <li><kbd>Ctrl + F</kbd> - Focus search box</li>
+                                    <li><kbd>Ctrl + B</kbd> - Go to billing</li>
+                                    <li><kbd>Esc</kbd> - Close modals</li>
+                                </ul>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </section>
-
-    <!-- Recent Activities -->
-    <section class="cashier-activities">
-        <div class="activities-container">
-            <h2 class="section-title">Recent Activities</h2>
-            <div class="activity-list">
-                <div class="activity-item">
-                    <div class="activity-icon">
-                        <i class="fas fa-sign-in-alt"></i>
-                    </div>
-                    <div class="activity-content">
-                        <h4>Shift Started</h4>
-                        <p>You have successfully logged in to the cashier system.</p>
-                        <span class="activity-time">Just now</span>
-                    </div>
-                </div>
+    </main>
+    
+    <!-- Modal -->
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Modal Title</h3>
+                <button class="modal-close" onclick="closeModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Modal content will be loaded here -->
             </div>
         </div>
-    </section>
-
-    <!-- Footer -->
-    <footer class="footer cashier-footer">
-        <div class="footer-container">
-            <div class="footer-content">
-                <div class="footer-brand">
-                    <h3>Pahana Edu - Cashier Portal</h3>
-                    <p>Professional billing and inventory management system for cashiers.</p>
-                </div>
-
-                <div class="footer-section">
-                    <h4>Quick Links</h4>
-                    <ul>
-                        <li><a href="#billing">Billing System</a></li>
-                        <li><a href="#inventory">Inventory</a></li>
-                        <li><a href="#customers">Customers</a></li>
-                        <li><a href="#reports">Reports</a></li>
-                    </ul>
-                </div>
-
-                <div class="footer-section">
-                    <h4>Support</h4>
-                    <ul>
-                        <li><a href="#">Help Center</a></li>
-                        <li><a href="#">Contact Admin</a></li>
-                        <li><a href="#">System Status</a></li>
-                    </ul>
-                </div>
-            </div>
-
-            <div class="footer-bottom">
-                <p>&copy; 2024 Pahana Edu. All rights reserved. | Cashier Portal</p>
-            </div>
-        </div>
-    </footer>
-
-    <!-- Custom JavaScript -->
-    <script src="js/script.js"></script>
-    <script src="js/dashboard.js"></script>
-    <script src="js/cashier.js"></script>
-
+    </div>
+    
+    <!-- Notification Container -->
+    <div class="notification-container" id="notificationContainer"></div>
+    
+    <!-- Scripts -->
+    <script src="js/cashier-dashboard.js"></script>
 </body>
 </html>
