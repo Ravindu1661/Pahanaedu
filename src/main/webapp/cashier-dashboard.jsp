@@ -168,28 +168,34 @@
                     </div>
                 </div>
                 
-                <!-- Quick Actions -->
-                <div class="quick-actions">
-                    <h3>Quick Actions</h3>
-                    <div class="action-grid">
-                        <button class="action-btn" onclick="navigateToPage('customers')">
-                            <i class="fas fa-user-plus"></i>
-                            <span>Add Customer</span>
-                        </button>
-                        <button class="action-btn" onclick="navigateToPage('inventory')">
-                            <i class="fas fa-plus-circle"></i>
-                            <span>Add Item</span>
-                        </button>
-                        <button class="action-btn" onclick="navigateToPage('billing')">
-                            <i class="fas fa-calculator"></i>
-                            <span>Create Bill</span>
-                        </button>
-                        <button class="action-btn" onclick="showCustomerSearch()">
-                            <i class="fas fa-search"></i>
-                            <span>Find Customer</span>
-                        </button>
-                    </div>
-                </div>
+               <!-- Quick Actions -->
+				<div class="quick-actions">
+				    <h3>Quick Actions</h3>
+				    <div class="action-grid">
+				        <button class="action-btn" onclick="navigateToPage('customers')">
+				            <i class="fas fa-user-plus"></i>
+				            <span>Add Customer</span>
+				        </button>
+				        <button class="action-btn" onclick="navigateToPage('inventory')">
+				            <i class="fas fa-plus-circle"></i>
+				            <span>Add Item</span>
+				        </button>
+				        <button class="action-btn" onclick="navigateToPage('billing')">
+				            <i class="fas fa-calculator"></i>
+				            <span>Create Bill</span>
+				        </button>
+				        <button class="action-btn" onclick="showCustomerSearch()">
+				            <i class="fas fa-search"></i>
+				            <span>Find Customer</span>
+				        </button>
+				        <!-- ✅ Newly added Scan Item button -->
+				        <button class="action-btn" onclick="window.location.href='cashier-scan.jsp'">
+				            <i class="fas fa-barcode"></i>
+				            <span>Scan Item</span>
+				        </button>
+				    </div>
+				</div>
+
                 
                 <!-- Recent Activities -->
                 <div class="recent-activities">

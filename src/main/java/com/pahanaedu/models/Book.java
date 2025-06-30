@@ -1,4 +1,5 @@
 // File: src/main/java/com/pahanaedu/models/Book.java
+// Updated Book Model with Reference Number and QR Code Support
 package com.pahanaedu.models;
 
 import java.math.BigDecimal;
@@ -17,13 +18,15 @@ public class Book {
     private int categoryId;
     private String categoryName; // For joined queries
     private BigDecimal price;
-    private BigDecimal offerPrice; // New field for offer price
+    private BigDecimal offerPrice; // Offer price field
     private int stock;
     private String description;
-    private String details; // New field for additional details
+    private String details; // Additional details
     private String imageUrls; // Comma-separated image URLs
     private String status;
     private List<String> images; // For multiple images
+    private String referenceNo; // Auto-generated reference number
+    private String qrCode; // QR code data
     private Timestamp createdAt;
     private Timestamp updatedAt;
     
@@ -69,6 +72,21 @@ public class Book {
     // Get effective price (offer price if available, otherwise regular price)
     public BigDecimal getEffectivePrice() {
         return hasOffer() ? offerPrice : price;
+    }
+    
+    // Generate QR code URL (for external QR generation service)
+    public String getQrCodeImageUrl() {
+        if (referenceNo == null || referenceNo.isEmpty()) {
+            return null;
+        }
+        // Using Google Charts API for QR code generation
+        return "https://chart.googleapis.com/chart?chs=150x150&cht=qr&chl=" + 
+               java.net.URLEncoder.encode(referenceNo, java.nio.charset.StandardCharsets.UTF_8);
+    }
+    
+    // Get formatted display reference
+    public String getFormattedReference() {
+        return referenceNo != null ? referenceNo : "Not Generated";
     }
     
     // Getters and Setters
@@ -177,6 +195,23 @@ public class Book {
         this.status = status;
     }
     
+    // New getters and setters for reference system
+    public String getReferenceNo() {
+        return referenceNo;
+    }
+    
+    public void setReferenceNo(String referenceNo) {
+        this.referenceNo = referenceNo;
+    }
+    
+    public String getQrCode() {
+        return qrCode;
+    }
+    
+    public void setQrCode(String qrCode) {
+        this.qrCode = qrCode;
+    }
+    
     public Timestamp getCreatedAt() {
         return createdAt;
     }
@@ -199,6 +234,7 @@ public class Book {
                 "id=" + id +
                 ", title='" + title + '\'' +
                 ", author='" + author + '\'' +
+                ", referenceNo='" + referenceNo + '\'' +
                 ", categoryId=" + categoryId +
                 ", price=" + price +
                 ", offerPrice=" + offerPrice +

@@ -1,5 +1,5 @@
 // File: src/main/java/com/pahanaedu/dao/BookDAO.java
-// Clean Production Version - No Debug Messages
+// Updated BookDAO with Reference Number and QR Code Support
 package com.pahanaedu.dao;
 
 import java.math.BigDecimal;
@@ -12,7 +12,7 @@ import com.pahanaedu.utils.DatabaseConnection;
 
 public class BookDAO {
     
-    // Get all books with category names
+    // Get all books with category names and reference data
     public List<Book> getAllBooks() {
         List<Book> books = new ArrayList<>();
         String sql = "SELECT b.*, c.name as category_name FROM books b " +
@@ -34,7 +34,7 @@ public class BookDAO {
         return books;
     }
     
-    // Get book by ID with images
+    // Get book by ID with all reference data
     public Book getBookById(int id) {
         String sql = "SELECT b.*, c.name as category_name FROM books b " +
                     "LEFT JOIN categories c ON b.category_id = c.id " +
@@ -57,10 +57,95 @@ public class BookDAO {
         return null;
     }
     
-    // Create new book with images
+    // Search book by reference number
+    public Book getBookByReferenceNo(String referenceNo) {
+        String sql = "SELECT b.*, c.name as category_name FROM books b " +
+                    "LEFT JOIN categories c ON b.category_id = c.id " +
+                    "WHERE b.reference_no = ?";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setString(1, referenceNo);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return extractBookFromResultSet(rs);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        
+        return null;
+    }
+    
+    // Search book by QR code
+    public Book getBookByQrCode(String qrCode) {
+        String sql = "SELECT b.*, c.name as category_name FROM books b " +
+                    "LEFT JOIN categories c ON b.category_id = c.id " +
+                    "WHERE b.qr_code = ?";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setString(1, qrCode);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return extractBookFromResultSet(rs);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        
+        return null;
+    }
+    
+    // Generate next reference number
+    public String generateReferenceNumber() {
+        String sql = "SELECT generate_reference_no() as ref_no";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+            
+            if (rs.next()) {
+                return rs.getString("ref_no");
+            }
+        } catch (SQLException e) {
+            // Fallback to manual generation if function doesn't exist
+            return generateReferenceNumberFallback();
+        }
+        
+        return generateReferenceNumberFallback();
+    }
+    
+    // Fallback reference number generation
+    private String generateReferenceNumberFallback() {
+        String sql = "SELECT COUNT(*) as count FROM books";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+            
+            if (rs.next()) {
+                int count = rs.getInt("count") + 1;
+                return String.format("BK%d%06d", 
+                    java.time.Year.now().getValue(), count);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        
+        // Final fallback
+        return "BK" + System.currentTimeMillis();
+    }
+    
+    // Create new book with auto-generated reference
     public boolean createBook(Book book, List<String> imageUrls) {
-        String sql = "INSERT INTO books (title, author, category_id, price, offer_price, stock, description, details, status) " +
-                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO books (title, author, category_id, price, offer_price, stock, " +
+                    "description, details, status, reference_no, qr_code) " +
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         
         Connection conn = null;
         PreparedStatement stmt = null;
@@ -70,6 +155,14 @@ public class BookDAO {
         try {
             conn = DatabaseConnection.getConnection();
             conn.setAutoCommit(false);
+            
+            // Generate reference number if not provided
+            if (book.getReferenceNo() == null || book.getReferenceNo().isEmpty()) {
+                book.setReferenceNo(generateReferenceNumber());
+            }
+            
+            // Set QR code data (same as reference number)
+            book.setQrCode(book.getReferenceNo());
             
             // Auto-set status based on stock
             if (book.getStock() <= 0) {
@@ -101,6 +194,8 @@ public class BookDAO {
             stmt.setString(7, book.getDescription());
             stmt.setString(8, book.getDetails());
             stmt.setString(9, book.getStatus());
+            stmt.setString(10, book.getReferenceNo());
+            stmt.setString(11, book.getQrCode());
             
             int affectedRows = stmt.executeUpdate();
             
@@ -108,6 +203,7 @@ public class BookDAO {
                 generatedKeys = stmt.getGeneratedKeys();
                 if (generatedKeys.next()) {
                     int bookId = generatedKeys.getInt(1);
+                    book.setId(bookId);
                     
                     // Save images if provided
                     if (imageUrls != null && !imageUrls.isEmpty()) {
@@ -155,15 +251,11 @@ public class BookDAO {
         }
     }
     
-    // Simplified createBook without images
-    public boolean createBook(Book book) {
-        return createBook(book, null);
-    }
-    
-    // Update book with images
+    // Update book (preserving reference number)
     public boolean updateBook(Book book, List<String> imageUrls) {
         String sql = "UPDATE books SET title = ?, author = ?, category_id = ?, " +
-                    "price = ?, offer_price = ?, stock = ?, description = ?, details = ?, status = ? WHERE id = ?";
+                    "price = ?, offer_price = ?, stock = ?, description = ?, details = ?, status = ? " +
+                    "WHERE id = ?";
         
         Connection conn = null;
         PreparedStatement stmt = null;
@@ -181,7 +273,7 @@ public class BookDAO {
                 book.setStatus("active");
             }
             
-            // Update book
+            // Update book (reference_no and qr_code are preserved)
             stmt = conn.prepareStatement(sql);
             stmt.setString(1, book.getTitle());
             stmt.setString(2, book.getAuthor());
@@ -261,12 +353,55 @@ public class BookDAO {
         }
     }
     
-    // Simplified updateBook without images
-    public boolean updateBook(Book book) {
-        return updateBook(book, null);
+    // Search books by multiple criteria
+    public List<Book> searchBooks(String searchTerm, String category, String status) {
+        List<Book> books = new ArrayList<>();
+        StringBuilder sql = new StringBuilder();
+        sql.append("SELECT b.*, c.name as category_name FROM books b ");
+        sql.append("LEFT JOIN categories c ON b.category_id = c.id WHERE 1=1 ");
+        
+        List<Object> params = new ArrayList<>();
+        
+        if (searchTerm != null && !searchTerm.trim().isEmpty()) {
+            sql.append("AND (b.title LIKE ? OR b.author LIKE ? OR b.reference_no LIKE ?) ");
+            String searchPattern = "%" + searchTerm.trim() + "%";
+            params.add(searchPattern);
+            params.add(searchPattern);
+            params.add(searchPattern);
+        }
+        
+        if (category != null && !category.trim().isEmpty() && !"all".equals(category)) {
+            sql.append("AND c.name = ? ");
+            params.add(category);
+        }
+        
+        if (status != null && !status.trim().isEmpty() && !"all".equals(status)) {
+            sql.append("AND b.status = ? ");
+            params.add(status);
+        }
+        
+        sql.append("ORDER BY b.title");
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
+            
+            for (int i = 0; i < params.size(); i++) {
+                stmt.setObject(i + 1, params.get(i));
+            }
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    books.add(extractBookFromResultSet(rs));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        
+        return books;
     }
     
-    // Delete book and its images
+    // Get all existing methods from original BookDAO...
     public boolean deleteBook(int id) {
         Connection conn = null;
         PreparedStatement deleteImgStmt = null;
@@ -318,7 +453,6 @@ public class BookDAO {
         }
     }
     
-    // Get total books count
     public int getTotalBooksCount() {
         String sql = "SELECT COUNT(*) FROM books WHERE status != 'out_of_stock'";
         
@@ -336,7 +470,6 @@ public class BookDAO {
         return 0;
     }
     
-    // Get out of stock books
     public List<Book> getOutOfStockBooks() {
         List<Book> books = new ArrayList<>();
         String sql = "SELECT b.*, c.name as category_name FROM books b " +
@@ -358,7 +491,6 @@ public class BookDAO {
         return books;
     }
     
-    // Get low stock books
     public List<Book> getLowStockBooks(int threshold) {
         List<Book> books = new ArrayList<>();
         String sql = "SELECT b.*, c.name as category_name FROM books b " +
@@ -382,31 +514,6 @@ public class BookDAO {
         return books;
     }
     
-    // Get books by category
-    public List<Book> getBooksByCategory(int categoryId) {
-        List<Book> books = new ArrayList<>();
-        String sql = "SELECT b.*, c.name as category_name FROM books b " +
-                    "LEFT JOIN categories c ON b.category_id = c.id " +
-                    "WHERE b.category_id = ? AND b.status = 'active' " +
-                    "ORDER BY b.title";
-        
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            
-            stmt.setInt(1, categoryId);
-            try (ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) {
-                    books.add(extractBookFromResultSet(rs));
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        
-        return books;
-    }
-    
-    // Get book images
     public List<String> getBookImages(int bookId) {
         List<String> images = new ArrayList<>();
         String sql = "SELECT image_url FROM book_images WHERE book_id = ? ORDER BY is_primary DESC, id";
@@ -427,41 +534,31 @@ public class BookDAO {
         return images;
     }
     
-    // Search books by title or author
-    public List<Book> searchBooks(String searchTerm) {
-        List<Book> books = new ArrayList<>();
-        String sql = "SELECT b.*, c.name as category_name FROM books b " +
-                    "LEFT JOIN categories c ON b.category_id = c.id " +
-                    "WHERE (b.title LIKE ? OR b.author LIKE ?) AND b.status = 'active' " +
-                    "ORDER BY b.title";
+    // Update book reference only
+    public boolean updateBookReference(Book book) {
+        String sql = "UPDATE books SET reference_no = ?, qr_code = ? WHERE id = ?";
         
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             
-            String searchPattern = "%" + searchTerm + "%";
-            stmt.setString(1, searchPattern);
-            stmt.setString(2, searchPattern);
+            stmt.setString(1, book.getReferenceNo());
+            stmt.setString(2, book.getQrCode());
+            stmt.setInt(3, book.getId());
             
-            try (ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) {
-                    books.add(extractBookFromResultSet(rs));
-                }
-            }
+            return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
             e.printStackTrace();
+            return false;
         }
-        
-        return books;
     }
     
-    // Get books with offers
-    public List<Book> getBooksWithOffers() {
+    // Get books without reference numbers
+    public List<Book> getBooksWithoutReferences() {
         List<Book> books = new ArrayList<>();
         String sql = "SELECT b.*, c.name as category_name FROM books b " +
                     "LEFT JOIN categories c ON b.category_id = c.id " +
-                    "WHERE b.offer_price IS NOT NULL AND b.offer_price > 0 AND b.offer_price < b.price " +
-                    "AND b.status = 'active' " +
-                    "ORDER BY ((b.price - b.offer_price) / b.price) DESC";
+                    "WHERE b.reference_no IS NULL OR b.reference_no = '' " +
+                    "ORDER BY b.id";
         
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql);
@@ -477,27 +574,73 @@ public class BookDAO {
         return books;
     }
     
-    // Update stock quantity
-    public boolean updateStock(int bookId, int newStock) {
-        String sql = "UPDATE books SET stock = ?, status = ? WHERE id = ?";
+    // Check if reference number exists
+    public boolean referenceNumberExists(String referenceNo) {
+        String sql = "SELECT COUNT(*) FROM books WHERE reference_no = ?";
         
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             
-            String status = newStock <= 0 ? "out_of_stock" : "active";
-            
-            stmt.setInt(1, newStock);
-            stmt.setString(2, status);
-            stmt.setInt(3, bookId);
-            
-            return stmt.executeUpdate() > 0;
+            stmt.setString(1, referenceNo);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0;
+                }
+            }
         } catch (SQLException e) {
             e.printStackTrace();
-            return false;
         }
+        
+        return false;
     }
     
-    // Extract book from result set
+    // Get books by category for references
+    public List<Book> getBooksByCategoryForReferences(int categoryId) {
+        List<Book> books = new ArrayList<>();
+        String sql = "SELECT b.*, c.name as category_name FROM books b " +
+                    "LEFT JOIN categories c ON b.category_id = c.id " +
+                    "WHERE b.category_id = ? " +
+                    "ORDER BY b.reference_no, b.title";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, categoryId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    books.add(extractBookFromResultSet(rs));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        
+        return books;
+    }
+    
+    // Get books with offers for references
+    public List<Book> getBooksWithOffersForReferences() {
+        List<Book> books = new ArrayList<>();
+        String sql = "SELECT b.*, c.name as category_name FROM books b " +
+                    "LEFT JOIN categories c ON b.category_id = c.id " +
+                    "WHERE b.offer_price IS NOT NULL AND b.offer_price > 0 AND b.offer_price < b.price " +
+                    "ORDER BY b.reference_no, b.title";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+            
+            while (rs.next()) {
+                books.add(extractBookFromResultSet(rs));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        
+        return books;
+    }
+    
+    // Extract book from result set with reference data
     private Book extractBookFromResultSet(ResultSet rs) throws SQLException {
         Book book = new Book();
         book.setId(rs.getInt("id"));
@@ -511,6 +654,8 @@ public class BookDAO {
         book.setDescription(rs.getString("description"));
         book.setDetails(rs.getString("details"));
         book.setStatus(rs.getString("status"));
+        book.setReferenceNo(rs.getString("reference_no"));
+        book.setQrCode(rs.getString("qr_code"));
         book.setCreatedAt(rs.getTimestamp("created_at"));
         book.setUpdatedAt(rs.getTimestamp("updated_at"));
         
