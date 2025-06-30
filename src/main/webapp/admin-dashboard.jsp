@@ -32,7 +32,7 @@
     
     <!-- External CSS -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
     <!-- Custom CSS -->
     <link href="css/admin.css" rel="stylesheet">
@@ -139,7 +139,8 @@
         
         <!-- Content Area -->
         <div class="content" id="mainContent">
-            <!-- Dashboard Content -->
+            
+            <!-- DASHBOARD CONTENT - Only visible on Dashboard page -->
             <div class="page-content" id="dashboard-content">
                 <!-- Stats Cards -->
                 <div class="stats-grid">
@@ -331,7 +332,7 @@
                 </div>
             </div>
             
-            <!-- Other page contents will be loaded here dynamically -->
+            <!-- CUSTOMERS CONTENT - Only visible on Customers page -->
             <div class="page-content" id="customers-content" style="display: none;">
                 <div class="content-header">
                     <h2>Customer Management</h2>
@@ -358,6 +359,7 @@
                 </div>
             </div>
             
+            <!-- CASHIERS CONTENT - Only visible on Cashiers page -->
             <div class="page-content" id="cashiers-content" style="display: none;">
                 <div class="content-header">
                     <h2>Cashier Management</h2>
@@ -384,60 +386,60 @@
                 </div>
             </div>
 
-			<!-- Replace your inventory-content div in admin.jsp with this -->
-				<div class="page-content" id="inventory-content" style="display: none;">
-				    <div class="content-header">
-				        <h2>Inventory Management</h2>
-				        <div class="header-actions">
-				            <button class="btn-primary" onclick="showAddBookModal()">
-				                <i class="fas fa-plus"></i> Add Book
-				            </button>
-				            <form action="book-references.jsp" method="get" style="display: inline; margin-left: 10px;">
-				                <button type="submit" class="btn-secondary">
-				                    <i class="fas fa-book"></i> Book References
-				                </button>
-				            </form>
-				        </div>
-				    </div>
-				</div>
-			    
-			    <!-- Stats Summary -->
-			    <div class="inventory-stats">
-			        <div class="stat-item">
-			            <span class="stat-label">Total Books:</span>
-			            <span class="stat-value" id="inventoryTotalBooks">0</span>
-			        </div>
-			        <div class="stat-item">
-			            <span class="stat-label">Low Stock:</span>
-			            <span class="stat-value warning" id="inventoryLowStock">0</span>
-			        </div>
-			        <div class="stat-item">
-			            <span class="stat-label">Out of Stock:</span>
-			            <span class="stat-value danger" id="inventoryOutOfStock">0</span>
-			        </div>
-			    </div>
-			    
-			    <div class="table-container">
-			        <table class="data-table" id="booksTable">
-			            <thead>
-			                <tr>
-			                    <th>ID</th>
-			                    <th>Title</th>
-			                    <th>Author</th>
-			                    <th>Category</th>
-			                    <th>Price</th>
-			                    <th>Stock</th>
-			                    <th>Status</th>
-			                    <th>Actions</th>
-			                </tr>
-			            </thead>
-			            <tbody>
-			                <!-- Book data will be loaded here -->
-			            </tbody>
-			        </table>
-			    </div>
-			</div>
+            <!-- INVENTORY CONTENT - Only visible on Inventory page -->
+            <div class="page-content" id="inventory-content" style="display: none;">
+                <div class="content-header">
+                    <h2>Inventory Management</h2>
+                    <div class="header-actions">
+                        <button class="btn-primary" onclick="showAddBookModal()">
+                            <i class="fas fa-plus"></i> Add Book
+                        </button>
+                        <form action="book-references.jsp" method="get" style="display: inline; margin-left: 10px;">
+                            <button type="submit" class="btn-secondary">
+                                <i class="fas fa-book"></i> Book References
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- Stats Summary for Inventory -->
+                <div class="inventory-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">Total Books:</span>
+                        <span class="stat-value" id="inventoryTotalBooks">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Low Stock:</span>
+                        <span class="stat-value warning" id="inventoryLowStock">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Out of Stock:</span>
+                        <span class="stat-value danger" id="inventoryOutOfStock">0</span>
+                    </div>
+                </div>
+                
+                <div class="table-container">
+                    <table class="data-table" id="booksTable">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Title</th>
+                                <th>Author</th>
+                                <th>Category</th>
+                                <th>Price</th>
+                                <th>Stock</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Book data will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
             
+            <!-- BILLING CONTENT - Only visible on Billing page -->
             <div class="page-content" id="billing-content" style="display: none;">
                 <div class="billing-container">
                     <h2>Billing System</h2>
@@ -461,11 +463,13 @@
                         <div class="billing-actions">
                             <button class="btn-primary" onclick="calculateBill()">Calculate</button>
                             <button class="btn-success" onclick="printBill()">Print Bill</button>
+                            <button class="btn-secondary" onclick="clearBill()">Clear Bill</button>
                         </div>
                     </div>
                 </div>
             </div>
             
+            <!-- REPORTS CONTENT - Only visible on Reports page -->
             <div class="page-content" id="reports-content" style="display: none;">
                 <div class="reports-container">
                     <h2>Reports & Analytics</h2>
@@ -489,6 +493,7 @@
                 </div>
             </div>
             
+            <!-- SETTINGS CONTENT - Only visible on Settings page -->
             <div class="page-content" id="settings-content" style="display: none;">
                 <div class="settings-container">
                     <h2>System Settings</h2>
@@ -523,6 +528,7 @@
                     </div>
                 </div>
             </div>
+            
         </div>
     </main>
     
@@ -541,8 +547,107 @@
         </div>
     </div>
     
-    <!-- Scripts -->
+    <!-- External Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
-    <script src="js/admin.js"></script>
+    
+    <!-- Admin Dashboard Modular JavaScript Files -->
+    <script src="js/admin/admin-styles.js"></script>       <!-- Dynamic styles and animations -->
+    <script src="js/admin/admin-core.js"></script>         <!-- Core functionality and initialization -->
+    <script src="js/admin/admin-stats.js"></script>        <!-- Statistics and dashboard data -->
+    <script src="js/admin/admin-charts.js"></script>       <!-- Charts and data visualization -->
+    <script src="js/admin/admin-customers.js"></script>    <!-- Customer management -->
+    <script src="js/admin/admin-cashiers.js"></script>     <!-- Cashier management -->
+    <script src="js/admin/admin-inventory.js"></script>    <!-- Inventory and books management -->
+    <script src="js/admin/admin-billing.js"></script>      <!-- Billing system -->
+    
+    <!-- Global Function Wrapper Script -->
+    <script>
+        // Ensure all functions are available globally after all modules load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Wait for all modules to load
+            setTimeout(() => {
+                // Make core functions globally available
+                if (window.adminCore) {
+                    window.navigateToPage = window.adminCore.navigateToPage;
+                    window.loadAllData = window.adminCore.loadAllData;
+                    window.makeApiCall = window.adminCore.makeApiCall;
+                    window.showNotification = window.adminCore.showNotification;
+                    window.showModal = window.adminCore.showModal;
+                    window.closeModal = window.adminCore.closeModal;
+                    window.data = window.adminCore.data;
+                    window.currentPage = window.adminCore.currentPage;
+                }
+                
+                // Make stats functions globally available
+                if (window.adminStats) {
+                    window.loadStats = window.adminStats.loadStats;
+                    window.updateStats = window.adminStats.updateStats;
+                    window.updateInventoryStats = window.adminStats.updateInventoryStats;
+                    window.updateInventoryStatsFromBooks = window.adminStats.updateInventoryStatsFromBooks;
+                    window.viewReports = window.adminStats.viewReports;
+                }
+                
+                // Make charts functions globally available
+                if (window.adminCharts) {
+                    window.initializeCharts = window.adminCharts.initializeCharts;
+                    window.updateSalesChart = window.adminCharts.updateSalesChart;
+                    window.updateCategoryChart = window.adminCharts.updateCategoryChart;
+                    window.loadCategoriesWithBookCount = window.adminCharts.loadCategoriesWithBookCount;
+                }
+                
+                // Make customer functions globally available
+                if (window.adminCustomers) {
+                    window.loadCustomers = window.adminCustomers.loadCustomers;
+                    window.displayCustomers = window.adminCustomers.displayCustomers;
+                    window.showAddCustomerModal = window.adminCustomers.showAddCustomerModal;
+                    window.editCustomer = window.adminCustomers.editCustomer;
+                    window.deleteCustomer = window.adminCustomers.deleteCustomer;
+                }
+                
+                // Make cashier functions globally available
+                if (window.adminCashiers) {
+                    window.loadCashiers = window.adminCashiers.loadCashiers;
+                    window.displayCashiers = window.adminCashiers.displayCashiers;
+                    window.showAddCashierModal = window.adminCashiers.showAddCashierModal;
+                    window.editCashier = window.adminCashiers.editCashier;
+                    window.deleteCashier = window.adminCashiers.deleteCashier;
+                }
+                
+                // Make inventory functions globally available
+                if (window.adminInventory) {
+                    window.loadBooks = window.adminInventory.loadBooks;
+                    window.loadCategories = window.adminInventory.loadCategories;
+                    window.displayBooks = window.adminInventory.displayBooks;
+                    window.viewBookDetails = window.adminInventory.viewBookDetails;
+                    window.showAddBookModal = window.adminInventory.showAddBookModal;
+                    window.editBook = window.adminInventory.editBook;
+                    window.deleteBook = window.adminInventory.deleteBook;
+                    window.changeMainImage = window.adminInventory.changeMainImage;
+                }
+                
+                // Make billing functions globally available
+                if (window.adminBilling) {
+                    window.initializeBillingSystem = window.adminBilling.initializeBillingSystem;
+                    window.addBillItem = window.adminBilling.addBillItem;
+                    window.removeBillItem = window.adminBilling.removeBillItem;
+                    window.updateBillItemPrice = window.adminBilling.updateBillItemPrice;
+                    window.updateBillItemTotal = window.adminBilling.updateBillItemTotal;
+                    window.updateBillTotal = window.adminBilling.updateBillTotal;
+                    window.generateBill = window.adminBilling.generateBill;
+                    window.calculateBill = window.adminBilling.calculateBill;
+                    window.printBill = window.adminBilling.printBill;
+                    window.clearBill = window.adminBilling.clearBill;
+                }
+                
+                console.log('🎯 All admin dashboard modules loaded and functions made globally available');
+                console.log('📋 Available global functions:', Object.keys(window).filter(key => 
+                    typeof window[key] === 'function' && 
+                    (key.includes('load') || key.includes('show') || key.includes('edit') || 
+                     key.includes('delete') || key.includes('add') || key.includes('generate') ||
+                     key.includes('update') || key.includes('navigate') || key.includes('view'))
+                ));
+            }, 100);
+        });
+    </script>
 </body>
 </html>
