@@ -1,94 +1,72 @@
 /**
- * Complete Direct Billing Management System for Admin Dashboard
+ * 
+ *//**
+ * Shopping Billing Management System for Admin Dashboard
  * With PDF/Excel Export Functionality
  */
 (function() {
     'use strict';
 
-    // Direct Billing Module
-    const AdminDirectBilling = {
+    // Shopping Billing Module
+    const AdminShoppingBilling = {
         // State management
         state: {
-            currentBill: {
-                items: [],
-                customer: null,
-                paymentMethod: 'CASH',
-                subtotal: 0,
-                tax: 0,
-                total: 0
-            },
-            customers: [],
-            products: [],
-            searchResults: [],
             bills: [],
+            cashiers: [],
             initialized: false
         },
 
-        // Initialize direct billing system
+        // Initialize shopping billing system
         async init() {
             if (this.state.initialized) {
-                console.log('🧾 Direct Billing already initialized, skipping...');
+                console.log('🧾 Shopping Billing already initialized, skipping...');
                 return;
             }
             
-            console.log('🧾 Initializing Direct Billing System...');
+            console.log('🧾 Initializing Shopping Billing System...');
             try {
-                await this.loadInitialData();
-                this.setupEventListeners();
-                this.updateCurrentDate();
-                this.generateNewBillNumber();
+                await this.loadCashiers(); // Load cashiers first
+                await this.loadBills();
                 this.state.initialized = true;
-                console.log('✅ Direct Billing System initialized');
+                console.log('✅ Shopping Billing System initialized');
             } catch (error) {
-                console.error('❌ Error initializing direct billing:', error);
+                console.error('❌ Error initializing shopping billing:', error);
             }
         },
 
-        // Load initial data with proper error handling
-        async loadInitialData() {
-            const promises = [
-                this.loadCustomers().catch(e => console.warn('Failed to load customers:', e)),
-                this.loadProducts().catch(e => console.warn('Failed to load products:', e)),
-                this.loadBills().catch(e => console.warn('Failed to load bills:', e))
-            ];
+        // Load cashiers
+        async loadCashiers() {
+            try {
+                const response = await fetch('admin?action=getCashiers');
+                if (!response.ok) throw new Error('Failed to fetch cashiers');
+                
+                const cashiers = await response.json();
+                this.state.cashiers = Array.isArray(cashiers) ? cashiers : [];
+                this.populateCashierDropdown();
+                console.log(`👤 Loaded ${this.state.cashiers.length} cashiers`);
+                return this.state.cashiers;
+            } catch (error) {
+                console.error('❌ Error loading cashiers:', error);
+                this.state.cashiers = [];
+                return [];
+            }
+        },
+
+        // Populate cashier dropdown
+        populateCashierDropdown() {
+            const cashierSelect = document.getElementById('cashierFilter');
+            if (!cashierSelect) return;
+
+            cashierSelect.innerHTML = '<option value="">All Cashiers</option>';
             
-            await Promise.allSettled(promises);
-            console.log('📊 Direct billing data loading completed');
-        },
-
-        // Load customers
-        async loadCustomers() {
-            try {
-                const response = await fetch('admin?action=getCustomers');
-                if (!response.ok) throw new Error('Failed to fetch customers');
-                
-                const customers = await response.json();
-                this.state.customers = Array.isArray(customers) ? customers : [];
-                this.populateCustomerDropdown();
-                console.log(`📋 Loaded ${this.state.customers.length} customers`);
-                return this.state.customers;
-            } catch (error) {
-                console.error('❌ Error loading customers:', error);
-                this.state.customers = [];
-                return [];
-            }
-        },
-
-        // Load products
-        async loadProducts() {
-            try {
-                const response = await fetch('admin?action=getBooks');
-                if (!response.ok) throw new Error('Failed to fetch products');
-                
-                const products = await response.json();
-                this.state.products = Array.isArray(products) ? products : [];
-                console.log(`📚 Loaded ${this.state.products.length} products`);
-                return this.state.products;
-            } catch (error) {
-                console.error('❌ Error loading products:', error);
-                this.state.products = [];
-                return [];
-            }
+            this.state.cashiers
+                .filter(cashier => cashier.status === 'active')
+                .forEach(cashier => {
+                    const option = document.createElement('option');
+                    option.value = cashier.id;
+                    option.textContent = `${cashier.firstName} ${cashier.lastName}`;
+                    cashierSelect.appendChild(option);
+                });
         },
 
         // Load bills with proper error handling
@@ -140,10 +118,17 @@
                 return dateB - dateA;
             });
 
-            tableBody.innerHTML = sortedBills.map(bill => `
+            tableBody.innerHTML = sortedBills.map(bill => {
+                // Find cashier name
+                const cashier = this.state.cashiers.find(c => c.id === bill.cashierId);
+                const cashierName = cashier 
+                    ? `${cashier.firstName} ${cashier.lastName}` 
+                    : bill.cashierName || 'Unknown';
+                
+                return `
                 <tr>
                     <td class="bill-no">${bill.billNo || 'N/A'}</td>
-                    <td>${bill.cashierName || 'Unknown'}</td>
+                    <td>${cashierName}</td>
                     <td>${bill.billDate ? new Date(bill.billDate).toLocaleDateString() : 'N/A'}</td>
                     <td>${bill.billTime || 'N/A'}</td>
                     <td>${bill.items ? bill.items.length : 0} items</td>
@@ -154,15 +139,16 @@
                     </td>
                     <td class="amount">₨ ${parseFloat(bill.totalAmount || 0).toFixed(2)}</td>
                     <td>
-                        <button class="btn-view" onclick="window.directBilling.viewBillDetails('${bill.billNo}')" title="View Details">
+                        <button class="btn-view" onclick="window.shoppingBilling.viewBillDetails('${bill.billNo}')" title="View Details">
                             <i class="fas fa-eye"></i>
                         </button>
-                        <button class="btn-print" onclick="window.directBilling.reprintBill('${bill.billNo}')" title="Reprint">
+                        <button class="btn-print" onclick="window.shoppingBilling.reprintBill('${bill.billNo}')" title="Reprint">
                             <i class="fas fa-print"></i>
                         </button>
                     </td>
                 </tr>
-            `).join('');
+                `;
+            }).join('');
         },
 
         // Update billing stats
@@ -187,142 +173,6 @@
             if (elements.todayBills) elements.todayBills.textContent = todayBills;
         },
 
-        // Populate customer dropdown
-        populateCustomerDropdown() {
-            const customerSelect = document.getElementById('directBillingCustomer');
-            if (!customerSelect) return;
-
-            customerSelect.innerHTML = '<option value="">Walk-in Customer</option>';
-            
-            this.state.customers
-                .filter(customer => customer.status === 'active')
-                .forEach(customer => {
-                    const option = document.createElement('option');
-                    option.value = customer.id;
-                    option.textContent = `${customer.firstName} ${customer.lastName} (${customer.email})`;
-                    customerSelect.appendChild(option);
-                });
-        },
-
-        // Setup event listeners
-        setupEventListeners() {
-            // Product search with debounce
-            let searchTimeout;
-            const productSearch = document.getElementById('productSearch');
-            if (productSearch) {
-                productSearch.addEventListener('input', (e) => {
-                    clearTimeout(searchTimeout);
-                    searchTimeout = setTimeout(() => {
-                        this.searchProducts(e.target.value);
-                    }, 300);
-                });
-            }
-
-            // Payment method selection
-            document.querySelectorAll('input[name="directPaymentMethod"]').forEach(radio => {
-                radio.addEventListener('change', () => {
-                    this.updatePaymentMethod();
-                });
-            });
-
-            // Hide search results when clicking outside
-            document.addEventListener('click', (e) => {
-                if (!e.target.closest('.product-search-group')) {
-                    this.hideSearchResults();
-                }
-            });
-        },
-
-        // Search products
-        searchProducts(query) {
-            if (!query || query.length < 2) {
-                this.hideSearchResults();
-                return;
-            }
-
-            const searchTerm = query.toLowerCase();
-            const results = this.state.products.filter(product => 
-                product.status === 'active' &&
-                product.stock > 0 &&
-                (
-                    product.title.toLowerCase().includes(searchTerm) ||
-                    product.author.toLowerCase().includes(searchTerm) ||
-                    (product.referenceNo && product.referenceNo.toLowerCase().includes(searchTerm))
-                )
-            ).slice(0, 10);
-
-            this.displaySearchResults(results);
-        },
-
-        // Display search results
-        displaySearchResults(results) {
-            const searchResultsContainer = document.getElementById('searchResults');
-            if (!searchResultsContainer) return;
-
-            if (results.length === 0) {
-                searchResultsContainer.innerHTML = `
-                    <div class="search-result no-results">
-                        <i class="fas fa-search"></i>
-                        <span>No products found</span>
-                    </div>
-                `;
-            } else {
-                searchResultsContainer.innerHTML = results.map(product => {
-                    const effectivePrice = (product.offerPrice && product.offerPrice > 0 && product.offerPrice < product.price) 
-                        ? product.offerPrice : product.price;
-                    
-                    return `
-                        <div class="search-result" onclick="window.directBilling.addProductToBill(${product.id})">
-                            <div class="result-info">
-                                <div class="result-title">${product.title}</div>
-                                <div class="result-author">by ${product.author}</div>
-                                <div class="result-ref">${product.referenceNo || 'N/A'}</div>
-                            </div>
-                            <div class="result-price">
-                                ${product.offerPrice && product.offerPrice > 0 && product.offerPrice < product.price ? 
-                                    `<span class="original-price">₨ ${parseFloat(product.price).toFixed(2)}</span>
-                                     <span class="offer-price">₨ ${parseFloat(product.offerPrice).toFixed(2)}</span>` :
-                                    `<span class="price">₨ ${parseFloat(product.price).toFixed(2)}</span>`
-                                }
-                                <div class="stock-info">${product.stock} in stock</div>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-            }
-
-            searchResultsContainer.style.display = 'block';
-        },
-
-        // Hide search results
-        hideSearchResults() {
-            const searchResultsContainer = document.getElementById('searchResults');
-            if (searchResultsContainer) {
-                searchResultsContainer.style.display = 'none';
-            }
-        },
-
-        // Update current date
-        updateCurrentDate() {
-            const currentDateEl = document.getElementById('currentDate');
-            if (currentDateEl) {
-                currentDateEl.textContent = new Date().toLocaleDateString();
-            }
-        },
-
-        // Generate new bill number
-        generateNewBillNumber() {
-            const now = new Date();
-            const billNo = `BILL${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}${Date.now().toString().slice(-4)}`;
-            
-            const billNoEl = document.getElementById('newBillNo');
-            if (billNoEl) {
-                billNoEl.textContent = billNo;
-            }
-            
-            this.state.currentBill.billNo = billNo;
-        },
-
         // View bill details
         viewBillDetails(billNo) {
             const bill = this.state.bills.find(b => b.billNo === billNo);
@@ -330,6 +180,12 @@
                 this.showNotification('Bill not found', 'error');
                 return;
             }
+
+            // Find cashier name
+            const cashier = this.state.cashiers.find(c => c.id === bill.cashierId);
+            const cashierName = cashier 
+                ? `${cashier.firstName} ${cashier.lastName}` 
+                : bill.cashierName || 'Unknown';
 
             const billHTML = `
                 <div style="max-width: 600px; font-family: Arial, sans-serif;">
@@ -345,7 +201,7 @@
                             <div><strong>Date:</strong> ${new Date(bill.billDate).toLocaleDateString()}</div>
                             <div><strong>Time:</strong> ${bill.billTime}</div>
                             <div><strong>Payment:</strong> ${bill.paymentMethod}</div>
-                            <div><strong>Cashier:</strong> ${bill.cashierName}</div>
+                            <div><strong>Cashier:</strong> ${cashierName}</div>
                         </div>
                         <div style="background: #f8f9fa; padding: 10px; border-radius: 5px;">
                             <strong>Customer:</strong> ${bill.customerName || 'Walk-in Customer'}
@@ -406,6 +262,12 @@
                 return;
             }
 
+            // Find cashier name
+            const cashier = this.state.cashiers.find(c => c.id === bill.cashierId);
+            const cashierName = cashier 
+                ? `${cashier.firstName} ${cashier.lastName}` 
+                : bill.cashierName || 'Unknown';
+
             this.showNotification('Opening print window...', 'info');
             
             setTimeout(() => {
@@ -455,7 +317,7 @@
                                         <div><strong>Date:</strong> ${new Date(bill.billDate).toLocaleDateString()}</div>
                                         <div><strong>Time:</strong> ${bill.billTime}</div>
                                         <div><strong>Payment:</strong> ${bill.paymentMethod}</div>
-                                        <div><strong>Cashier:</strong> ${bill.cashierName}</div>
+                                        <div><strong>Cashier:</strong> ${cashierName}</div>
                                     </div>
                                     <div class="customer-info">
                                         <strong>Customer:</strong> ${bill.customerName || 'Walk-in Customer'}
@@ -539,18 +401,26 @@
                 }
 
                 // Prepare data for Excel
-                const excelData = this.state.bills.map(bill => ({
-                    'Bill No': bill.billNo || 'N/A',
-                    'Date': bill.billDate ? new Date(bill.billDate).toLocaleDateString() : 'N/A',
-                    'Time': bill.billTime || 'N/A',
-                    'Cashier': bill.cashierName || 'Unknown',
-                    'Customer': bill.customerName || 'Walk-in Customer',
-                    'Payment Method': bill.paymentMethod || 'N/A',
-                    'Items Count': bill.items ? bill.items.length : 0,
-                    'Subtotal': parseFloat(bill.subtotal || 0).toFixed(2),
-                    'Tax Amount': parseFloat(bill.taxAmount || 0).toFixed(2),
-                    'Total Amount': parseFloat(bill.totalAmount || 0).toFixed(2)
-                }));
+                const excelData = this.state.bills.map(bill => {
+                    // Find cashier name
+                    const cashier = this.state.cashiers.find(c => c.id === bill.cashierId);
+                    const cashierName = cashier 
+                        ? `${cashier.firstName} ${cashier.lastName}` 
+                        : bill.cashierName || 'Unknown';
+                    
+                    return {
+                        'Bill No': bill.billNo || 'N/A',
+                        'Date': bill.billDate ? new Date(bill.billDate).toLocaleDateString() : 'N/A',
+                        'Time': bill.billTime || 'N/A',
+                        'Cashier': cashierName,
+                        'Customer': bill.customerName || 'Walk-in Customer',
+                        'Payment Method': bill.paymentMethod || 'N/A',
+                        'Items Count': bill.items ? bill.items.length : 0,
+                        'Subtotal': parseFloat(bill.subtotal || 0).toFixed(2),
+                        'Tax Amount': parseFloat(bill.taxAmount || 0).toFixed(2),
+                        'Total Amount': parseFloat(bill.totalAmount || 0).toFixed(2)
+                    };
+                });
 
                 // Create CSV content
                 const headers = Object.keys(excelData[0]);
@@ -672,18 +542,25 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    ${this.state.bills.map(bill => `
+                                    ${this.state.bills.map(bill => {
+                                        // Find cashier name
+                                        const cashier = this.state.cashiers.find(c => c.id === bill.cashierId);
+                                        const cashierName = cashier 
+                                            ? `${cashier.firstName} ${cashier.lastName}` 
+                                            : bill.cashierName || 'Unknown';
+                                        
+                                        return `
                                         <tr>
                                             <td>${bill.billNo || 'N/A'}</td>
                                             <td>${bill.billDate ? new Date(bill.billDate).toLocaleDateString() : 'N/A'}</td>
                                             <td>${bill.billTime || 'N/A'}</td>
-                                            <td>${bill.cashierName || 'Unknown'}</td>
+                                            <td>${cashierName}</td>
                                             <td>${bill.customerName || 'Walk-in'}</td>
                                             <td><span class="payment-${bill.paymentMethod === 'CASH' ? 'cash' : 'card'}">${bill.paymentMethod || 'N/A'}</span></td>
                                             <td>${bill.items ? bill.items.length : 0}</td>
                                             <td>₨ ${parseFloat(bill.totalAmount || 0).toFixed(2)}</td>
                                         </tr>
-                                    `).join('')}
+                                    `}).join('')}
                                 </tbody>
                             </table>
                             
@@ -725,6 +602,7 @@
         filterBills() {
             const dateFilter = document.getElementById('billDateFilter')?.value;
             const paymentFilter = document.getElementById('paymentMethodFilter')?.value;
+            const cashierFilter = document.getElementById('cashierFilter')?.value;
 
             let filteredBills = [...this.state.bills];
 
@@ -737,6 +615,12 @@
             if (paymentFilter) {
                 filteredBills = filteredBills.filter(bill => 
                     bill.paymentMethod === paymentFilter
+                );
+            }
+
+            if (cashierFilter) {
+                filteredBills = filteredBills.filter(bill => 
+                    bill.cashierId == cashierFilter
                 );
             }
 
@@ -779,12 +663,12 @@
         }
     };
 
-    // Global export functions with proper implementation
+    // Global export functions
     window.exportToExcel = function() {
-        if (window.directBilling && window.directBilling.exportToExcel) {
-            window.directBilling.exportToExcel();
+        if (window.shoppingBilling && window.shoppingBilling.exportToExcel) {
+            window.shoppingBilling.exportToExcel();
         } else {
-            console.warn('Direct billing module not available');
+            console.warn('Shopping billing module not available');
             if (window.adminCore && window.adminCore.showNotification) {
                 window.adminCore.showNotification('Export function not available', 'error');
             }
@@ -792,10 +676,10 @@
     };
 
     window.exportToPDF = function() {
-        if (window.directBilling && window.directBilling.exportToPDF) {
-            window.directBilling.exportToPDF();
+        if (window.shoppingBilling && window.shoppingBilling.exportToPDF) {
+            window.shoppingBilling.exportToPDF();
         } else {
-            console.warn('Direct billing module not available');
+            console.warn('Shopping billing module not available');
             if (window.adminCore && window.adminCore.showNotification) {
                 window.adminCore.showNotification('Export function not available', 'error');
             }
@@ -808,14 +692,14 @@
     };
 
     window.clearFilters = function() {
-        if (window.directBilling && window.directBilling.clearFilters) {
-            window.directBilling.clearFilters();
+        if (window.shoppingBilling && window.shoppingBilling.clearFilters) {
+            window.shoppingBilling.clearFilters();
         } else {
-            console.warn('Direct billing module not available');
+            console.warn('Shopping billing module not available');
         }
     };
 
-    // Enhanced tab switching with proper initialization
+    // Enhanced tab switching
     window.switchBillingTab = function(tab) {
         console.log(`🔄 Switching to billing tab: ${tab}`);
         
@@ -838,18 +722,13 @@
         // Initialize appropriate system
         if (tab === 'shopping') {
             setTimeout(() => {
-                AdminDirectBilling.init().then(() => {
-                    AdminDirectBilling.loadBills();
+                window.shoppingBilling.init().then(() => {
+                    window.shoppingBilling.loadBills();
                     console.log('✅ Shopping tab initialized with data');
                     if (window.adminCore && window.adminCore.showNotification) {
-                        window.adminCore.showNotification('Direct Shopping data loaded!', 'success');
+                        window.adminCore.showNotification('Shopping data loaded!', 'success');
                     }
                 });
-            }, 100);
-        } else if (tab === 'direct') {
-            setTimeout(() => {
-                AdminDirectBilling.init();
-                console.log('✅ Direct billing tab initialized');
             }, 100);
         } else if (tab === 'online') {
             if (window.adminCore && window.adminCore.showNotification) {
@@ -868,10 +747,10 @@
             
             console.log('🧾 Auto-initializing billing system on page load...');
             setTimeout(() => {
-                AdminDirectBilling.init().then(() => {
+                window.shoppingBilling.init().then(() => {
                     console.log('✅ Billing system auto-initialized successfully');
                     if (window.adminCore && window.adminCore.showNotification) {
-                        window.adminCore.showNotification('Direct Shopping system ready!', 'success');
+                        window.adminCore.showNotification('Shopping system ready!', 'success');
                     }
                 });
             }, 200);
@@ -879,14 +758,8 @@
     }
 
     // Global functions
-    window.directBilling = AdminDirectBilling;
-    window.selectCustomer = () => AdminDirectBilling.selectCustomer ? AdminDirectBilling.selectCustomer() : null;
-    window.searchProducts = (query) => AdminDirectBilling.searchProducts ? AdminDirectBilling.searchProducts(query) : null;
-    window.generateDirectBill = () => AdminDirectBilling.generateDirectBill ? AdminDirectBilling.generateDirectBill() : null;
-    window.previewDirectBill = () => AdminDirectBilling.previewDirectBill ? AdminDirectBilling.previewDirectBill() : null;
-    window.closeBillPreview = () => AdminDirectBilling.closeBillPreview ? AdminDirectBilling.closeBillPreview() : null;
-    window.clearDirectBill = () => AdminDirectBilling.clearDirectBill ? AdminDirectBilling.clearDirectBill() : null;
-    window.filterBills = () => AdminDirectBilling.filterBills ? AdminDirectBilling.filterBills() : null;
+    window.shoppingBilling = AdminShoppingBilling;
+    window.filterBills = () => window.shoppingBilling.filterBills ? window.shoppingBilling.filterBills() : null;
 
     // Enhanced page navigation detection
     const originalAddEventListener = document.addEventListener;
@@ -910,11 +783,11 @@
     // Initialize when DOM is ready
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => {
-            console.log('🧾 Direct Billing System Ready');
+            console.log('🧾 Shopping Billing System Ready');
             setTimeout(initializeBillingOnPageLoad, 500);
         });
     } else {
-        console.log('🧾 Direct Billing System Ready (DOM already loaded)');
+        console.log('🧾 Shopping Billing System Ready (DOM already loaded)');
         setTimeout(initializeBillingOnPageLoad, 500);
     }
 
@@ -925,17 +798,14 @@
         
         if (billingContent && billingContent.style.display !== 'none' &&
             shoppingBilling && shoppingBilling.style.display !== 'none' &&
-            !AdminDirectBilling.state.initialized) {
+            !window.shoppingBilling.state.initialized) {
             
             console.log('🔄 Periodic check: Initializing billing system...');
-            AdminDirectBilling.init();
+            window.shoppingBilling.init();
         }
     }, 2000);
 
-    // Export module
-    window.adminDirectBilling = AdminDirectBilling;
-
-    console.log('✅ Admin Direct Billing System with Export Functions loaded and ready');
+    console.log('✅ Admin Shopping Billing System with Export Functions loaded and ready');
     console.log('📊 Export Functions Available:');
     console.log('├── exportToExcel() - Export bills to CSV/Excel format');
     console.log('├── exportToPDF() - Export bills to PDF report');

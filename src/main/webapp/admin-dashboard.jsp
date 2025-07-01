@@ -36,10 +36,9 @@
     
     <!-- Custom CSS -->
     <link href="css/admin.css" rel="stylesheet">
-     <link href="css/admin-direct-bill.css" rel="stylesheet">
+    <link href="css/admin-direct-bill.css" rel="stylesheet">
 </head>
 <body>
-
     <!-- Sidebar -->
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
@@ -140,8 +139,7 @@
         
         <!-- Content Area -->
         <div class="content" id="mainContent">
-            
-            <!-- DASHBOARD CONTENT - Only visible on Dashboard page -->
+            <!-- DASHBOARD CONTENT -->
             <div class="page-content" id="dashboard-content">
                 <!-- Stats Cards -->
                 <div class="stats-grid">
@@ -155,7 +153,6 @@
                             <span class="stat-change positive">+12% this month</span>
                         </div>
                     </div>
-                    
                     <div class="stat-card">
                         <div class="stat-icon books">
                             <i class="fas fa-book"></i>
@@ -166,7 +163,6 @@
                             <span class="stat-change positive">+8% this week</span>
                         </div>
                     </div>
-                    
                     <div class="stat-card">
                         <div class="stat-icon revenue">
                             <i class="fas fa-chart-line"></i>
@@ -177,7 +173,6 @@
                             <span class="stat-change positive">+15% this month</span>
                         </div>
                     </div>
-                    
                     <div class="stat-card">
                         <div class="stat-icon orders">
                             <i class="fas fa-shopping-cart"></i>
@@ -207,7 +202,6 @@
                             <canvas id="salesChart"></canvas>
                         </div>
                     </div>
-                    
                     <div class="chart-container">
                         <div class="chart-header">
                             <h3>Book Categories</h3>
@@ -301,7 +295,6 @@
                                 <span>95% Uptime</span>
                             </div>
                         </div>
-                        
                         <div class="status-item">
                             <div class="status-icon">
                                 <i class="fas fa-database"></i>
@@ -315,7 +308,6 @@
                                 <span>88% Performance</span>
                             </div>
                         </div>
-                        
                         <div class="status-item">
                             <div class="status-icon">
                                 <i class="fas fa-shield-alt"></i>
@@ -333,7 +325,7 @@
                 </div>
             </div>
             
-            <!-- CUSTOMERS CONTENT - Only visible on Customers page -->
+            <!-- CUSTOMERS CONTENT -->
             <div class="page-content" id="customers-content" style="display: none;">
                 <div class="content-header">
                     <h2>Customer Management</h2>
@@ -360,7 +352,7 @@
                 </div>
             </div>
             
-            <!-- CASHIERS CONTENT - Only visible on Cashiers page -->
+            <!-- CASHIERS CONTENT -->
             <div class="page-content" id="cashiers-content" style="display: none;">
                 <div class="content-header">
                     <h2>Cashier Management</h2>
@@ -387,7 +379,7 @@
                 </div>
             </div>
 
-            <!-- INVENTORY CONTENT - Only visible on Inventory page -->
+            <!-- INVENTORY CONTENT -->
             <div class="page-content" id="inventory-content" style="display: none;">
                 <div class="content-header">
                     <h2>Inventory Management</h2>
@@ -440,295 +432,178 @@
                 </div>
             </div>
             
-            <!-- BILLING CONTENT - Only visible on Billing page -->
-         <!-- BILLING CONTENT - Only visible on Billing page -->
-<div class="page-content" id="billing-content" style="display: none;">
-    <div class="content-header">
-        <h2>Billing Management</h2>
-        <div class="billing-tabs">
-            <button class="tab-btn active" onclick="switchBillingTab('shopping')">
-                <i class="fas fa-shopping-cart"></i> Direct Shopping
-            </button>
-            <button class="tab-btn" onclick="switchBillingTab('online')">
-                <i class="fas fa-globe"></i> Online Billing
-            </button>
-            <button class="tab-btn" onclick="switchBillingTab('direct')">
-                <i class="fas fa-cash-register"></i> Direct Billing
-            </button>
-        </div>
-    </div>
-
-    <!-- Direct Shopping Tab (Previously Online Billing) -->
-    <div class="billing-tab-content" id="shopping-billing" style="display: block;">
-        <div class="billing-stats">
-            <div class="stat-card">
-                <div class="stat-icon">
-                    <i class="fas fa-receipt"></i>
-                </div>
-                <div class="stat-info">
-                    <h3 id="totalBills">0</h3>
-                    <p>Total Bills</p>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon">
-                    <i class="fas fa-money-bill-wave"></i>
-                </div>
-                <div class="stat-info">
-                    <h3 id="totalRevenueBilling">₨ 0</h3>
-                    <p>Total Revenue</p>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon">
-                    <i class="fas fa-calendar-day"></i>
-                </div>
-                <div class="stat-info">
-                    <h3 id="todayBills">0</h3>
-                    <p>Today's Bills</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="table-container">
-            <div class="table-header">
-                <h3>Direct Shopping Bills (Cashier Generated)</h3>
-                <div class="table-filters">
-                    <input type="date" id="billDateFilter" placeholder="Filter by date">
-                    <select id="paymentMethodFilter">
-                        <option value="">All Payment Methods</option>
-                        <option value="CASH">Cash</option>
-                        <option value="CARD">Card</option>
-                    </select>
-                    <select id="cashierFilter">
-                        <option value="">All Cashiers</option>
-                    </select>
-                    <button class="btn-primary" onclick="filterBills()">
-                        <i class="fas fa-filter"></i> Filter
-                    </button>
-                    <button class="btn-secondary" onclick="clearFilters()">
-                        <i class="fas fa-times"></i> Clear
-                    </button>
-                </div>
-            </div>
-            <table class="data-table" id="billsTable">
-                <thead>
-                    <tr>
-                        <th>Bill No</th>
-                        <th>Cashier</th>
-                        <th>Date</th>
-                        <th>Time</th>
-                        <th>Items</th>
-                        <th>Payment</th>
-                        <th>Total</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- Bills data will be loaded here -->
-                </tbody>
-            </table>
-        </div>
-
-        <!-- Export Options -->
-        <div class="export-section">
-            <h4>Export Data</h4>
-            <div class="export-buttons">
-                <button class="btn-success" onclick="exportToExcel()">
-                    <i class="fas fa-file-excel"></i> Export to Excel
-                </button>
-                <button class="btn-info" onclick="exportToPDF()">
-                    <i class="fas fa-file-pdf"></i> Export to PDF
-                </button>
-                <button class="btn-warning" onclick="printReport()">
-                    <i class="fas fa-print"></i> Print Report
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Online Billing Tab (New - Empty for Future Development) -->
-    <div class="billing-tab-content" id="online-billing" style="display: none;">
-        <div class="online-billing-container">
-            <div class="coming-soon-section">
-                <div class="coming-soon-content">
-                    <i class="fas fa-globe-americas"></i>
-                    <h3>Online Billing System</h3>
-                    <p>Complete e-commerce and online ordering system</p>
-                    <div class="features-preview">
-                        <div class="feature-item">
-                            <i class="fas fa-shopping-cart"></i>
-                            <span>Online Store Integration</span>
-                        </div>
-                        <div class="feature-item">
-                            <i class="fas fa-credit-card"></i>
-                            <span>Payment Gateway</span>
-                        </div>
-                        <div class="feature-item">
-                            <i class="fas fa-truck"></i>
-                            <span>Delivery Management</span>
-                        </div>
-                        <div class="feature-item">
-                            <i class="fas fa-users"></i>
-                            <span>Customer Portal</span>
-                        </div>
-                        <div class="feature-item">
-                            <i class="fas fa-mobile-alt"></i>
-                            <span>Mobile App Integration</span>
-                        </div>
-                        <div class="feature-item">
-                            <i class="fas fa-chart-line"></i>
-                            <span>Advanced Analytics</span>
-                        </div>
-                    </div>
-                    <div class="development-status">
-                        <span class="status-badge coming-soon">Coming Soon</span>
-                        <p>This feature is under development and will be available in future updates.</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Placeholder for Future Online Billing Components -->
-            <div class="online-components-placeholder" style="display: none;">
-                <!-- Online Store Management -->
-                <div class="online-store-section">
-                    <h4>Online Store Management</h4>
-                    <!-- Content will be added later -->
-                </div>
-
-                <!-- Customer Orders -->
-                <div class="customer-orders-section">
-                    <h4>Customer Orders</h4>
-                    <!-- Content will be added later -->
-                </div>
-
-                <!-- Payment Processing -->
-                <div class="payment-processing-section">
-                    <h4>Payment Processing</h4>
-                    <!-- Content will be added later -->
-                </div>
-
-                <!-- Delivery Management -->
-                <div class="delivery-management-section">
-                    <h4>Delivery Management</h4>
-                    <!-- Content will be added later -->
-                </div>
-
-                <!-- Online Analytics -->
-                <div class="online-analytics-section">
-                    <h4>Online Analytics</h4>
-                    <!-- Content will be added later -->
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Direct Billing Tab -->
-    <div class="billing-tab-content" id="direct-billing" style="display: none;">
-        <div class="direct-billing-container">
-            <div class="billing-form-section">
-                <div class="form-header">
-                    <h3>Create New Bill</h3>
-                    <div class="bill-info">
-                        <span>Bill No: <strong id="newBillNo">BILL-NEW</strong></span>
-                        <span>Date: <strong id="currentDate"></strong></span>
+            <!-- BILLING CONTENT -->
+            <div class="page-content" id="billing-content" style="display: none;">
+                <div class="content-header">
+                    <h2>Billing Management</h2>
+                    <div class="billing-tabs">
+                        <button class="tab-btn active" id="shoppingTabBtn" onclick="switchBillingTab('shopping')">
+                            <i class="fas fa-shopping-cart"></i> Direct Shopping
+                        </button>
+                        <button class="tab-btn" id="onlineTabBtn" onclick="switchBillingTab('online')">
+                            <i class="fas fa-globe"></i> Online Billing
+                        </button>
                     </div>
                 </div>
 
-                <div class="customer-section">
-                    <div class="form-group">
-                        <label>Customer (Optional)</label>
-                        <div class="customer-input-group">
-                            <select id="directBillingCustomer" onchange="selectCustomer()">
-                                <option value="">Walk-in Customer</option>
-                            </select>
-                            <button type="button" class="btn-secondary" onclick="showAddCustomerModal()">
-                                <i class="fas fa-plus"></i> Add New
+                <!-- Direct Shopping Tab -->
+                <div class="billing-tab-content" id="shopping-billing" style="display: block;">
+                    <div class="billing-stats">
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-receipt"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="totalBills">0</h3>
+                                <p>Total Bills</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-money-bill-wave"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="totalRevenueBilling">₨ 0</h3>
+                                <p>Total Revenue</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-calendar-day"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="todayBills">0</h3>
+                                <p>Today's Bills</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <div class="table-header">
+                            <h3>Direct Shopping Bills (Cashier Generated)</h3>
+                            <div class="table-filters">
+                                <input type="date" id="billDateFilter" placeholder="Filter by date">
+                                <select id="paymentMethodFilter">
+                                    <option value="">All Payment Methods</option>
+                                    <option value="CASH">Cash</option>
+                                    <option value="CARD">Card</option>
+                                </select>
+                                <select id="cashierFilter">
+                                    <option value="">All Cashiers</option>
+                                </select>
+                                <button class="btn-primary" onclick="filterBills()">
+                                    <i class="fas fa-filter"></i> Filter
+                                </button>
+                                <button class="btn-secondary" onclick="clearFilters()">
+                                    <i class="fas fa-times"></i> Clear
+                                </button>
+                            </div>
+                        </div>
+                        <table class="data-table" id="billsTable">
+                            <thead>
+                                <tr>
+                                    <th>Bill No</th>
+                                    <th>Cashier</th>
+                                    <th>Date</th>
+                                    <th>Time</th>
+                                    <th>Items</th>
+                                    <th>Payment</th>
+                                    <th>Total</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Bills data will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Export Options -->
+                    <div class="export-section">
+                        <h4>Export Data</h4>
+                        <div class="export-buttons">
+                            <button class="btn-success" onclick="exportToExcel()">
+                                <i class="fas fa-file-excel"></i> Export to Excel
+                            </button>
+                            <button class="btn-info" onclick="exportToPDF()">
+                                <i class="fas fa-file-pdf"></i> Export to PDF
+                            </button>
+                            <button class="btn-warning" onclick="printReport()">
+                                <i class="fas fa-print"></i> Print Report
                             </button>
                         </div>
                     </div>
                 </div>
 
-                <div class="product-search-section">
-                    <div class="form-group">
-                        <label>Add Products</label>
-                        <div class="product-search-group">
-                            <input type="text" id="productSearch" placeholder="Search by title, author, or reference..." onkeyup="searchProducts()" autocomplete="off">
-                            <div class="search-results" id="searchResults" style="display: none;"></div>
+                <!-- Online Billing Tab -->
+                <div class="billing-tab-content" id="online-billing" style="display: none;">
+                    <div class="online-billing-container">
+                        <div class="coming-soon-section">
+                            <div class="coming-soon-content">
+                                <i class="fas fa-globe-americas"></i>
+                                <h3>Online Billing System</h3>
+                                <p>Complete e-commerce and online ordering system</p>
+                                <div class="features-preview">
+                                    <div class="feature-item">
+                                        <i class="fas fa-shopping-cart"></i>
+                                        <span>Online Store Integration</span>
+                                    </div>
+                                    <div class="feature-item">
+                                        <i class="fas fa-credit-card"></i>
+                                        <span>Payment Gateway</span>
+                                    </div>
+                                    <div class="feature-item">
+                                        <i class="fas fa-truck"></i>
+                                        <span>Delivery Management</span>
+                                    </div>
+                                    <div class="feature-item">
+                                        <i class="fas fa-users"></i>
+                                        <span>Customer Portal</span>
+                                    </div>
+                                    <div class="feature-item">
+                                        <i class="fas fa-mobile-alt"></i>
+                                        <span>Mobile App Integration</span>
+                                    </div>
+                                    <div class="feature-item">
+                                        <i class="fas fa-chart-line"></i>
+                                        <span>Advanced Analytics</span>
+                                    </div>
+                                </div>
+                                <div class="development-status">
+                                    <span class="status-badge coming-soon">Coming Soon</span>
+                                    <p>This feature is under development and will be available in future updates.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Placeholder for Future Online Billing Components -->
+                        <div class="online-components-placeholder" style="display: none;">
+                            <div class="online-store-section">
+                                <h4>Online Store Management</h4>
+                                <!-- Content will be added later -->
+                            </div>
+                            <div class="customer-orders-section">
+                                <h4>Customer Orders</h4>
+                                <!-- Content will be added later -->
+                            </div>
+                            <div class="payment-processing-section">
+                                <h4>Payment Processing</h4>
+                                <!-- Content will be added later -->
+                            </div>
+                            <div class="delivery-management-section">
+                                <h4>Delivery Management</h4>
+                                <!-- Content will be added later -->
+                            </div>
+                            <div class="online-analytics-section">
+                                <h4>Online Analytics</h4>
+                                <!-- Content will be added later -->
+                            </div>
                         </div>
                     </div>
-                </div>
-
-                <div class="bill-items-section">
-                    <h4>Bill Items</h4>
-                    <div class="bill-items-container" id="directBillItems">
-                        <div class="empty-bill-state">
-                            <i class="fas fa-shopping-cart"></i>
-                            <p>No items added yet</p>
-                            <span>Search and add products to create a bill</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bill-summary-section">
-                    <div class="summary-row">
-                        <span>Subtotal:</span>
-                        <span id="directSubtotal">₨ 0.00</span>
-                    </div>
-                    <div class="summary-row">
-                        <span>Tax (10%):</span>
-                        <span id="directTax">₨ 0.00</span>
-                    </div>
-                    <div class="summary-row total">
-                        <span>Total:</span>
-                        <span id="directTotal">₨ 0.00</span>
-                    </div>
-                </div>
-
-                <div class="payment-section">
-                    <div class="form-group">
-                        <label>Payment Method</label>
-                        <div class="payment-options">
-                            <label class="payment-option active">
-                                <input type="radio" name="directPaymentMethod" value="CASH" checked onchange="selectPaymentMethod()">
-                                <span><i class="fas fa-money-bill-wave"></i> Cash</span>
-                            </label>
-                            <label class="payment-option">
-                                <input type="radio" name="directPaymentMethod" value="CARD" onchange="selectPaymentMethod()">
-                                <span><i class="fas fa-credit-card"></i> Card</span>
-                            </label>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="billing-actions">
-                    <button class="btn-success" id="generateDirectBillBtn" onclick="generateDirectBill()" disabled>
-                        <i class="fas fa-receipt"></i> Generate Bill
-                    </button>
-                    <button class="btn-primary" onclick="previewDirectBill()" disabled id="previewDirectBillBtn">
-                        <i class="fas fa-eye"></i> Preview
-                    </button>
-                    <button class="btn-secondary" onclick="clearDirectBill()">
-                        <i class="fas fa-trash"></i> Clear All
-                    </button>
                 </div>
             </div>
-
-            <div class="billing-preview-section" id="billingPreview" style="display: none;">
-                <div class="preview-header">
-                    <h3>Bill Preview</h3>
-                    <button class="btn-close" onclick="closeBillPreview()">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-                <div class="preview-content" id="previewContent">
-                    <!-- Preview content will be generated here -->
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-            <!-- REPORTS CONTENT - Only visible on Reports page -->
+            
+            <!-- REPORTS CONTENT -->
             <div class="page-content" id="reports-content" style="display: none;">
                 <div class="reports-container">
                     <h2>Reports & Analytics</h2>
@@ -752,7 +627,7 @@
                 </div>
             </div>
             
-            <!-- SETTINGS CONTENT - Only visible on Settings page -->
+            <!-- SETTINGS CONTENT -->
             <div class="page-content" id="settings-content" style="display: none;">
                 <div class="settings-container">
                     <h2>System Settings</h2>
@@ -787,7 +662,6 @@
                     </div>
                 </div>
             </div>
-            
         </div>
     </main>
     
@@ -810,23 +684,20 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     
     <!-- Admin Dashboard Modular JavaScript Files -->
-    <script src="js/admin/admin-styles.js"></script>       <!-- Dynamic styles and animations -->
-    <script src="js/admin/admin-core.js"></script>         <!-- Core functionality and initialization -->
-    <script src="js/admin/admin-stats.js"></script>        <!-- Statistics and dashboard data -->
-    <script src="js/admin/admin-charts.js"></script>       <!-- Charts and data visualization -->
-    <script src="js/admin/admin-customers.js"></script>    <!-- Customer management -->
-    <script src="js/admin/admin-cashiers.js"></script>     <!-- Cashier management -->
-    <script src="js/admin/admin-inventory.js"></script>    <!-- Inventory and books management -->
-    <script src="js/admin/admin-billin.js"></script>      <!-- Billing system -->
-    <script src="js/admin/admin-direct-billing.js"></script> 
+    <script src="js/admin/admin-styles.js"></script>
+    <script src="js/admin/admin-core.js"></script>
+    <script src="js/admin/admin-stats.js"></script>
+    <script src="js/admin/admin-charts.js"></script>
+    <script src="js/admin/admin-customers.js"></script>
+    <script src="js/admin/admin-cashiers.js"></script>
+    <script src="js/admin/admin-inventory.js"></script>
+    <script src="js/admin/admin-billin.js"></script>
+    <script src="js/admin/admin-direct-billing.js"></script>
     
     <!-- Global Function Wrapper Script -->
     <script>
-        // Ensure all functions are available globally after all modules load
         document.addEventListener('DOMContentLoaded', function() {
-            // Wait for all modules to load
             setTimeout(() => {
-                // Make core functions globally available
                 if (window.adminCore) {
                     window.navigateToPage = window.adminCore.navigateToPage;
                     window.loadAllData = window.adminCore.loadAllData;
@@ -838,7 +709,6 @@
                     window.currentPage = window.adminCore.currentPage;
                 }
                 
-                // Make stats functions globally available
                 if (window.adminStats) {
                     window.loadStats = window.adminStats.loadStats;
                     window.updateStats = window.adminStats.updateStats;
@@ -847,7 +717,6 @@
                     window.viewReports = window.adminStats.viewReports;
                 }
                 
-                // Make charts functions globally available
                 if (window.adminCharts) {
                     window.initializeCharts = window.adminCharts.initializeCharts;
                     window.updateSalesChart = window.adminCharts.updateSalesChart;
@@ -855,7 +724,6 @@
                     window.loadCategoriesWithBookCount = window.adminCharts.loadCategoriesWithBookCount;
                 }
                 
-                // Make customer functions globally available
                 if (window.adminCustomers) {
                     window.loadCustomers = window.adminCustomers.loadCustomers;
                     window.displayCustomers = window.adminCustomers.displayCustomers;
@@ -864,7 +732,6 @@
                     window.deleteCustomer = window.adminCustomers.deleteCustomer;
                 }
                 
-                // Make cashier functions globally available
                 if (window.adminCashiers) {
                     window.loadCashiers = window.adminCashiers.loadCashiers;
                     window.displayCashiers = window.adminCashiers.displayCashiers;
@@ -873,7 +740,6 @@
                     window.deleteCashier = window.adminCashiers.deleteCashier;
                 }
                 
-                // Make inventory functions globally available
                 if (window.adminInventory) {
                     window.loadBooks = window.adminInventory.loadBooks;
                     window.loadCategories = window.adminInventory.loadCategories;
@@ -885,7 +751,6 @@
                     window.changeMainImage = window.adminInventory.changeMainImage;
                 }
                 
-                // Make billing functions globally available
                 if (window.adminBilling) {
                     window.initializeBillingSystem = window.adminBilling.initializeBillingSystem;
                     window.addBillItem = window.adminBilling.addBillItem;
