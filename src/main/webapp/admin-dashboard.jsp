@@ -36,6 +36,7 @@
     
     <!-- Custom CSS -->
     <link href="css/admin.css" rel="stylesheet">
+     <link href="css/admin-direct-bill.css" rel="stylesheet">
 </head>
 <body>
 
@@ -440,35 +441,293 @@
             </div>
             
             <!-- BILLING CONTENT - Only visible on Billing page -->
-            <div class="page-content" id="billing-content" style="display: none;">
-                <div class="billing-container">
-                    <h2>Billing System</h2>
-                    <div class="billing-form">
-                        <div class="form-group">
-                            <label>Customer</label>
-                            <select id="billingCustomer">
-                                <option value="">Select Customer</option>
-                            </select>
+         <!-- BILLING CONTENT - Only visible on Billing page -->
+<div class="page-content" id="billing-content" style="display: none;">
+    <div class="content-header">
+        <h2>Billing Management</h2>
+        <div class="billing-tabs">
+            <button class="tab-btn active" onclick="switchBillingTab('shopping')">
+                <i class="fas fa-shopping-cart"></i> Direct Shopping
+            </button>
+            <button class="tab-btn" onclick="switchBillingTab('online')">
+                <i class="fas fa-globe"></i> Online Billing
+            </button>
+            <button class="tab-btn" onclick="switchBillingTab('direct')">
+                <i class="fas fa-cash-register"></i> Direct Billing
+            </button>
+        </div>
+    </div>
+
+    <!-- Direct Shopping Tab (Previously Online Billing) -->
+    <div class="billing-tab-content" id="shopping-billing" style="display: block;">
+        <div class="billing-stats">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-receipt"></i>
+                </div>
+                <div class="stat-info">
+                    <h3 id="totalBills">0</h3>
+                    <p>Total Bills</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-money-bill-wave"></i>
+                </div>
+                <div class="stat-info">
+                    <h3 id="totalRevenueBilling">₨ 0</h3>
+                    <p>Total Revenue</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-calendar-day"></i>
+                </div>
+                <div class="stat-info">
+                    <h3 id="todayBills">0</h3>
+                    <p>Today's Bills</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <div class="table-header">
+                <h3>Direct Shopping Bills (Cashier Generated)</h3>
+                <div class="table-filters">
+                    <input type="date" id="billDateFilter" placeholder="Filter by date">
+                    <select id="paymentMethodFilter">
+                        <option value="">All Payment Methods</option>
+                        <option value="CASH">Cash</option>
+                        <option value="CARD">Card</option>
+                    </select>
+                    <select id="cashierFilter">
+                        <option value="">All Cashiers</option>
+                    </select>
+                    <button class="btn-primary" onclick="filterBills()">
+                        <i class="fas fa-filter"></i> Filter
+                    </button>
+                    <button class="btn-secondary" onclick="clearFilters()">
+                        <i class="fas fa-times"></i> Clear
+                    </button>
+                </div>
+            </div>
+            <table class="data-table" id="billsTable">
+                <thead>
+                    <tr>
+                        <th>Bill No</th>
+                        <th>Cashier</th>
+                        <th>Date</th>
+                        <th>Time</th>
+                        <th>Items</th>
+                        <th>Payment</th>
+                        <th>Total</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Bills data will be loaded here -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Export Options -->
+        <div class="export-section">
+            <h4>Export Data</h4>
+            <div class="export-buttons">
+                <button class="btn-success" onclick="exportToExcel()">
+                    <i class="fas fa-file-excel"></i> Export to Excel
+                </button>
+                <button class="btn-info" onclick="exportToPDF()">
+                    <i class="fas fa-file-pdf"></i> Export to PDF
+                </button>
+                <button class="btn-warning" onclick="printReport()">
+                    <i class="fas fa-print"></i> Print Report
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Online Billing Tab (New - Empty for Future Development) -->
+    <div class="billing-tab-content" id="online-billing" style="display: none;">
+        <div class="online-billing-container">
+            <div class="coming-soon-section">
+                <div class="coming-soon-content">
+                    <i class="fas fa-globe-americas"></i>
+                    <h3>Online Billing System</h3>
+                    <p>Complete e-commerce and online ordering system</p>
+                    <div class="features-preview">
+                        <div class="feature-item">
+                            <i class="fas fa-shopping-cart"></i>
+                            <span>Online Store Integration</span>
                         </div>
-                        <div class="form-group">
-                            <label>Date</label>
-                            <input type="date" id="billingDate" />
+                        <div class="feature-item">
+                            <i class="fas fa-credit-card"></i>
+                            <span>Payment Gateway</span>
                         </div>
-                        <div class="bill-items" id="billItems">
-                            <!-- Bill items will be added here -->
+                        <div class="feature-item">
+                            <i class="fas fa-truck"></i>
+                            <span>Delivery Management</span>
                         </div>
-                        <div class="bill-total">
-                            <h3>Total: <span id="billTotal">₨ 0.00</span></h3>
+                        <div class="feature-item">
+                            <i class="fas fa-users"></i>
+                            <span>Customer Portal</span>
                         </div>
-                        <div class="billing-actions">
-                            <button class="btn-primary" onclick="calculateBill()">Calculate</button>
-                            <button class="btn-success" onclick="printBill()">Print Bill</button>
-                            <button class="btn-secondary" onclick="clearBill()">Clear Bill</button>
+                        <div class="feature-item">
+                            <i class="fas fa-mobile-alt"></i>
+                            <span>Mobile App Integration</span>
                         </div>
+                        <div class="feature-item">
+                            <i class="fas fa-chart-line"></i>
+                            <span>Advanced Analytics</span>
+                        </div>
+                    </div>
+                    <div class="development-status">
+                        <span class="status-badge coming-soon">Coming Soon</span>
+                        <p>This feature is under development and will be available in future updates.</p>
                     </div>
                 </div>
             </div>
-            
+
+            <!-- Placeholder for Future Online Billing Components -->
+            <div class="online-components-placeholder" style="display: none;">
+                <!-- Online Store Management -->
+                <div class="online-store-section">
+                    <h4>Online Store Management</h4>
+                    <!-- Content will be added later -->
+                </div>
+
+                <!-- Customer Orders -->
+                <div class="customer-orders-section">
+                    <h4>Customer Orders</h4>
+                    <!-- Content will be added later -->
+                </div>
+
+                <!-- Payment Processing -->
+                <div class="payment-processing-section">
+                    <h4>Payment Processing</h4>
+                    <!-- Content will be added later -->
+                </div>
+
+                <!-- Delivery Management -->
+                <div class="delivery-management-section">
+                    <h4>Delivery Management</h4>
+                    <!-- Content will be added later -->
+                </div>
+
+                <!-- Online Analytics -->
+                <div class="online-analytics-section">
+                    <h4>Online Analytics</h4>
+                    <!-- Content will be added later -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Direct Billing Tab -->
+    <div class="billing-tab-content" id="direct-billing" style="display: none;">
+        <div class="direct-billing-container">
+            <div class="billing-form-section">
+                <div class="form-header">
+                    <h3>Create New Bill</h3>
+                    <div class="bill-info">
+                        <span>Bill No: <strong id="newBillNo">BILL-NEW</strong></span>
+                        <span>Date: <strong id="currentDate"></strong></span>
+                    </div>
+                </div>
+
+                <div class="customer-section">
+                    <div class="form-group">
+                        <label>Customer (Optional)</label>
+                        <div class="customer-input-group">
+                            <select id="directBillingCustomer" onchange="selectCustomer()">
+                                <option value="">Walk-in Customer</option>
+                            </select>
+                            <button type="button" class="btn-secondary" onclick="showAddCustomerModal()">
+                                <i class="fas fa-plus"></i> Add New
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="product-search-section">
+                    <div class="form-group">
+                        <label>Add Products</label>
+                        <div class="product-search-group">
+                            <input type="text" id="productSearch" placeholder="Search by title, author, or reference..." onkeyup="searchProducts()" autocomplete="off">
+                            <div class="search-results" id="searchResults" style="display: none;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bill-items-section">
+                    <h4>Bill Items</h4>
+                    <div class="bill-items-container" id="directBillItems">
+                        <div class="empty-bill-state">
+                            <i class="fas fa-shopping-cart"></i>
+                            <p>No items added yet</p>
+                            <span>Search and add products to create a bill</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bill-summary-section">
+                    <div class="summary-row">
+                        <span>Subtotal:</span>
+                        <span id="directSubtotal">₨ 0.00</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Tax (10%):</span>
+                        <span id="directTax">₨ 0.00</span>
+                    </div>
+                    <div class="summary-row total">
+                        <span>Total:</span>
+                        <span id="directTotal">₨ 0.00</span>
+                    </div>
+                </div>
+
+                <div class="payment-section">
+                    <div class="form-group">
+                        <label>Payment Method</label>
+                        <div class="payment-options">
+                            <label class="payment-option active">
+                                <input type="radio" name="directPaymentMethod" value="CASH" checked onchange="selectPaymentMethod()">
+                                <span><i class="fas fa-money-bill-wave"></i> Cash</span>
+                            </label>
+                            <label class="payment-option">
+                                <input type="radio" name="directPaymentMethod" value="CARD" onchange="selectPaymentMethod()">
+                                <span><i class="fas fa-credit-card"></i> Card</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="billing-actions">
+                    <button class="btn-success" id="generateDirectBillBtn" onclick="generateDirectBill()" disabled>
+                        <i class="fas fa-receipt"></i> Generate Bill
+                    </button>
+                    <button class="btn-primary" onclick="previewDirectBill()" disabled id="previewDirectBillBtn">
+                        <i class="fas fa-eye"></i> Preview
+                    </button>
+                    <button class="btn-secondary" onclick="clearDirectBill()">
+                        <i class="fas fa-trash"></i> Clear All
+                    </button>
+                </div>
+            </div>
+
+            <div class="billing-preview-section" id="billingPreview" style="display: none;">
+                <div class="preview-header">
+                    <h3>Bill Preview</h3>
+                    <button class="btn-close" onclick="closeBillPreview()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="preview-content" id="previewContent">
+                    <!-- Preview content will be generated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
             <!-- REPORTS CONTENT - Only visible on Reports page -->
             <div class="page-content" id="reports-content" style="display: none;">
                 <div class="reports-container">
@@ -558,7 +817,8 @@
     <script src="js/admin/admin-customers.js"></script>    <!-- Customer management -->
     <script src="js/admin/admin-cashiers.js"></script>     <!-- Cashier management -->
     <script src="js/admin/admin-inventory.js"></script>    <!-- Inventory and books management -->
-    <script src="js/admin/admin-billing.js"></script>      <!-- Billing system -->
+    <script src="js/admin/admin-billin.js"></script>      <!-- Billing system -->
+    <script src="js/admin/admin-direct-billing.js"></script> 
     
     <!-- Global Function Wrapper Script -->
     <script>
